@@ -816,8 +816,7 @@
 /* ══════════ SUPABASE CONFIG ══════════ */
 const SUPABASE_URL = 'https://kvajbjhmxeuewyvercml.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2YWpiamhteGV1ZXd5dmVyY21sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MTU5MDMsImV4cCI6MjA4Nzk5MTkwM30.h8kBuF8H3O5V8IjI4-Xu3MmIqbUoCw1lJNC7KDKiBok';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const DATA_ROW_ID = 'finanzas-main';
 let syncStatus = 'ok';
