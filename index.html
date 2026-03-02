@@ -1,0 +1,2849 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanzas Personales</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #FFFFFF;
+            --surface: #FFFFFF;
+            --surface-alt: #FAFAFA;
+            --surface-hover: #F5F5F5;
+            --border: #EEEEEE;
+            --border-light: #F3F3F3;
+            --text: #2C2C2C;
+            --text-secondary: #888888;
+            --text-muted: #BBBBBB;
+            --accent: #B8D4C8;
+            --accent-dark: #8BB5A2;
+            --accent-text: #5A8A72;
+            --danger: #E8AFA8;
+            --danger-text: #C06B60;
+            --warning: #F0D4A8;
+            --warning-text: #B8903C;
+            --purple: #C8BDE0;
+            --purple-text: #8070A8;
+            --peach: #F2CFC0;
+            --sky: #B0D0E8;
+            --rose: #E8B8C0;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.06);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --transition: 0.2s ease;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app { max-width: 1080px; margin: 0 auto; padding: 40px 32px 80px; }
+
+        /* ── Hero Animations ── */
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            33% { transform: translateY(-12px) rotate(1deg); }
+            66% { transform: translateY(-6px) rotate(-0.5deg); }
+        }
+        @keyframes bubbleFloat1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(15px, -20px) scale(1.05); }
+            50% { transform: translate(-10px, -35px) scale(0.95); }
+            75% { transform: translate(20px, -15px) scale(1.02); }
+        }
+        @keyframes bubbleFloat2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(-20px, -10px) scale(0.97); }
+            50% { transform: translate(10px, -25px) scale(1.04); }
+            75% { transform: translate(-15px, -20px) scale(0.98); }
+        }
+        @keyframes bubbleFloat3 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(25px, -18px) scale(1.06); }
+            66% { transform: translate(-8px, -30px) scale(0.96); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes barFill {
+            from { transform: scaleX(0); }
+            to { transform: scaleX(1); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1) rotate(180deg); }
+        }
+
+        /* ── Hero Header ── */
+        .hero {
+            background: linear-gradient(135deg, #EDF5F0, #EBF0F8, #F5EDF0, #F0F2E8, #EDF5F0);
+            background-size: 400% 400%;
+            animation: gradientShift 12s ease infinite;
+            border-radius: var(--radius-xl);
+            padding: 44px 44px 0;
+            margin-bottom: 36px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(200,195,210,0.35);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.02);
+        }
+        .hero-bubble {
+            position: absolute; border-radius: 50%; pointer-events: none;
+        }
+        .hero-bubble.b1 {
+            width: 180px; height: 180px; top: -50px; right: -30px;
+            background: radial-gradient(circle, rgba(184,212,200,0.25) 0%, rgba(184,212,200,0) 70%);
+            animation: bubbleFloat1 8s ease-in-out infinite;
+        }
+        .hero-bubble.b2 {
+            width: 120px; height: 120px; bottom: 30px; left: -20px;
+            background: radial-gradient(circle, rgba(200,189,224,0.2) 0%, rgba(200,189,224,0) 70%);
+            animation: bubbleFloat2 10s ease-in-out infinite;
+        }
+        .hero-bubble.b3 {
+            width: 80px; height: 80px; top: 40%; left: 25%;
+            background: radial-gradient(circle, rgba(240,200,180,0.15) 0%, rgba(240,200,180,0) 70%);
+            animation: bubbleFloat3 7s ease-in-out infinite;
+        }
+        .hero-bubble.b4 {
+            width: 60px; height: 60px; top: 15px; left: 55%;
+            background: radial-gradient(circle, rgba(174,208,232,0.18) 0%, rgba(174,208,232,0) 70%);
+            animation: bubbleFloat2 9s ease-in-out infinite 1s;
+        }
+        .hero-bubble.b5 {
+            width: 40px; height: 40px; bottom: 60px; right: 15%;
+            background: radial-gradient(circle, rgba(200,224,208,0.2) 0%, rgba(200,224,208,0) 70%);
+            animation: bubbleFloat1 6s ease-in-out infinite 0.5s;
+        }
+        .hero-sparkle {
+            position: absolute; width: 6px; height: 6px; pointer-events: none;
+            background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(200,189,224,0.3));
+            border-radius: 50%;
+        }
+        .hero-sparkle.s1 { top: 25%; right: 18%; animation: sparkle 3s ease-in-out infinite 0.5s; }
+        .hero-sparkle.s2 { top: 55%; left: 12%; animation: sparkle 4s ease-in-out infinite 1.5s; }
+        .hero-sparkle.s3 { top: 15%; left: 38%; animation: sparkle 3.5s ease-in-out infinite 2.5s; }
+
+        .hero-top {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 32px; position: relative; z-index: 2; flex-wrap: wrap; gap: 12px;
+        }
+        .hero-text { animation: slideUp 0.6s ease-out both; }
+        .hero-text h1 {
+            font-size: 1.65rem; font-weight: 700; letter-spacing: -0.04em;
+            color: var(--text); margin-bottom: 6px;
+            background: linear-gradient(90deg, var(--text), #6B7B8D, var(--text));
+            background-size: 200% auto;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 6s linear infinite;
+        }
+        .hero-text p {
+            font-size: 0.82rem; color: var(--text-secondary);
+            animation: slideUp 0.6s ease-out 0.15s both;
+        }
+        .header-actions {
+            display: flex; gap: 6px; align-items: center;
+            animation: slideUp 0.6s ease-out 0.25s both;
+        }
+
+        .mockup {
+            position: relative; z-index: 1;
+            max-width: 600px; margin: 0 auto;
+            animation: float 6s ease-in-out infinite, slideUp 0.8s ease-out 0.3s both;
+        }
+        .mockup-laptop {
+            background: linear-gradient(180deg, #333 0%, #2A2A2A 100%);
+            border-radius: 12px 12px 0 0;
+            padding: 8px 8px 0;
+            box-shadow: 0 -2px 30px rgba(0,0,0,0.1), 0 8px 40px rgba(0,0,0,0.08);
+            transition: box-shadow 0.4s ease;
+        }
+        .mockup:hover .mockup-laptop {
+            box-shadow: 0 -2px 30px rgba(0,0,0,0.14), 0 16px 60px rgba(0,0,0,0.12);
+        }
+        .mockup-bezel {
+            display: flex; align-items: center; gap: 5px;
+            padding: 6px 10px;
+        }
+        .mockup-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+        .mockup:hover .mockup-dot { transform: scale(1.3); }
+        .mockup-screen {
+            background: linear-gradient(180deg, #FCFCFC 0%, #F7F7F9 100%);
+            border-radius: 6px 6px 0 0;
+            padding: 14px 16px;
+            min-height: 120px;
+            display: flex; flex-direction: column; gap: 10px;
+            position: relative; overflow: hidden;
+        }
+        .mockup-screen::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 5s ease-in-out infinite 2s;
+            pointer-events: none;
+        }
+        .ms-row { display: flex; gap: 8px; }
+        .ms-card {
+            flex: 1; background: white; border-radius: 8px; padding: 8px 10px;
+            border: 1px solid #EEEEEE;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: slideUp 0.5s ease-out both;
+        }
+        .ms-card:nth-child(1) { animation-delay: 0.5s; }
+        .ms-card:nth-child(2) { animation-delay: 0.65s; }
+        .ms-card:nth-child(3) { animation-delay: 0.8s; }
+        .mockup:hover .ms-card { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .ms-label { font-size: 5px; text-transform: uppercase; letter-spacing: 0.08em; color: #BBBBBB; font-weight: 600; margin-bottom: 2px; }
+        .ms-value { font-size: 11px; font-weight: 700; letter-spacing: -0.02em; }
+        .ms-bar {
+            height: 4px; border-radius: 2px; margin-top: 4px;
+            transform-origin: left; animation: barFill 1.2s ease-out 0.8s both;
+        }
+        .ms-table {
+            background: white; border-radius: 8px; padding: 6px 8px; border: 1px solid #EEEEEE;
+            animation: slideUp 0.5s ease-out 0.9s both;
+        }
+        .ms-table-row {
+            display: flex; justify-content: space-between; align-items: center; padding: 3px 0;
+            transition: background 0.2s ease;
+        }
+        .ms-table-row:hover { background: rgba(0,0,0,0.01); }
+        .ms-table-row + .ms-table-row { border-top: 1px solid #F5F5F5; }
+        .ms-table-label { font-size: 5.5px; color: #888; }
+        .ms-table-val { font-size: 6px; font-weight: 700; }
+        .ms-dot { width: 4px; height: 4px; border-radius: 50%; display: inline-block; margin-right: 3px; }
+
+        .mockup-base {
+            background: linear-gradient(180deg, #E0E0E0 0%, #D0D0D0 100%);
+            height: 12px;
+            border-radius: 0 0 6px 6px;
+            margin: 0 -20px;
+            position: relative;
+        }
+        .mockup-base::before {
+            content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 60px; height: 4px; background: #C5C5C5; border-radius: 0 0 4px 4px;
+        }
+
+        @media (max-width: 700px) {
+            .hero { padding: 28px 20px 0; }
+            .hero-text h1 { font-size: 1.3rem; }
+            .mockup { max-width: 100%; }
+            .mockup-screen { padding: 10px 12px; min-height: 90px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero, .hero-bubble, .hero-sparkle, .mockup, .hero-text, .hero-text h1,
+            .hero-text p, .header-actions, .ms-card, .ms-bar, .ms-table, .mockup-screen::after {
+                animation: none !important;
+            }
+            .mockup:hover .mockup-laptop { box-shadow: 0 -2px 20px rgba(0,0,0,0.08); }
+        }
+
+        /* ── Navigation ── */
+        .nav-wrapper {
+            background: var(--surface-alt); border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+            padding: 16px 20px; margin-bottom: 32px;
+        }
+        .nav-top {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;
+        }
+        .nav-year-group { display: flex; align-items: center; gap: 8px; }
+        .nav-year {
+            font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; min-width: 52px; text-align: center;
+        }
+        .nav-arrow {
+            width: 30px; height: 30px; border: 1px solid var(--border); background: white;
+            border-radius: 8px; cursor: pointer; font-size: 0.75rem; color: var(--text-secondary);
+            display: flex; align-items: center; justify-content: center; transition: all var(--transition);
+            font-family: inherit;
+        }
+        .nav-arrow:hover { background: var(--surface-hover); color: var(--text); border-color: #DDD; }
+        .nav-actions { display: flex; gap: 6px; align-items: center; }
+        .nav-filter {
+            padding: 6px 10px; border: 1px solid var(--border); background: white; border-radius: 8px;
+            font-family: inherit; font-size: 0.72rem; color: var(--text-secondary); cursor: pointer;
+            transition: all var(--transition); outline: none;
+        }
+        .nav-filter:focus { border-color: var(--text); }
+        .tab-add {
+            padding: 6px 12px; border: 1px dashed var(--border); background: white; cursor: pointer;
+            font-family: inherit; font-size: 0.72rem; color: var(--text-muted); border-radius: 8px;
+            transition: all var(--transition);
+        }
+        .tab-add:hover { border-color: var(--text-muted); color: var(--text-secondary); background: var(--surface-hover); }
+
+        .tabs-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px;
+        }
+        .tab-item {
+            position: relative; padding: 10px 12px; border: 1px solid var(--border-light); background: white;
+            border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 0.78rem;
+            font-weight: 500; color: var(--text-secondary); transition: all var(--transition);
+            display: flex; align-items: center; justify-content: space-between; gap: 4px;
+        }
+        .tab-item:hover { border-color: #DDD; box-shadow: var(--shadow-xs); color: var(--text); }
+        .tab-item.active {
+            background: var(--text); color: white; border-color: var(--text);
+            box-shadow: var(--shadow-sm);
+        }
+        .tab-item .tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        .tab-menu-btn {
+            width: 18px; height: 18px; border: none; background: none; cursor: pointer;
+            color: inherit; font-size: 0.8rem; border-radius: 4px; display: flex;
+            align-items: center; justify-content: center; opacity: 0; transition: opacity var(--transition);
+            flex-shrink: 0;
+        }
+        .tab-item:hover .tab-menu-btn { opacity: 0.5; }
+        .tab-item.active .tab-menu-btn { opacity: 0.7; }
+        .tab-menu-btn:hover { opacity: 1 !important; background: rgba(255,255,255,0.15); }
+        .tab-item:not(.active) .tab-menu-btn:hover { background: var(--surface-hover); }
+        .tab-empty {
+            grid-column: 1 / -1; text-align: center; padding: 16px; color: var(--text-muted);
+            font-size: 0.78rem;
+        }
+
+        /* ── Dropdown ── */
+        .dropdown {
+            position: fixed; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; box-shadow: var(--shadow-md); padding: 6px; z-index: 200;
+            min-width: 160px; display: none;
+        }
+        .dropdown.open { display: block; }
+        .dropdown button {
+            width: 100%; padding: 8px 12px; border: none; background: none; cursor: pointer;
+            font-family: inherit; font-size: 0.8rem; color: var(--text-secondary); text-align: left;
+            border-radius: 6px; transition: background var(--transition);
+        }
+        .dropdown button:hover { background: var(--surface-hover); color: var(--text); }
+        .dropdown .danger { color: var(--danger-text); }
+        .dropdown .danger:hover { background: #FEF0EE; }
+
+        /* ── Summary ── */
+        .summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+        .stat-card {
+            background: var(--surface-alt); border-radius: var(--radius); padding: 20px 24px;
+            border: 1px solid var(--border-light); transition: box-shadow var(--transition);
+        }
+        .stat-card:hover { box-shadow: var(--shadow-sm); }
+        .stat-card .label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 6px; }
+        .stat-card .value { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+        .stat-card .sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* ── Savings Card ── */
+        .savings-card {
+            background: linear-gradient(135deg, #F0F7F3 0%, #F2EEF7 50%, #F7F0EE 100%);
+            border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 32px;
+            border: 1px solid #E8E4EE; position: relative; overflow: hidden;
+        }
+        .savings-card::before {
+            content: ''; position: absolute; top: -30px; right: -30px;
+            width: 120px; height: 120px; border-radius: 50%;
+            background: rgba(187, 213, 200, 0.2);
+        }
+        .savings-card::after {
+            content: ''; position: absolute; bottom: -20px; left: 40%;
+            width: 80px; height: 80px; border-radius: 50%;
+            background: rgba(200, 189, 224, 0.15);
+        }
+        .savings-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 2px; }
+        .savings-name { font-size: 0.9rem; font-weight: 500; color: var(--text); margin-bottom: 12px; }
+        .savings-balance { font-size: 2rem; font-weight: 700; letter-spacing: -0.03em; color: var(--accent-text); }
+        .savings-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;
+        }
+        .savings-edit {
+            position: absolute; top: 16px; right: 16px; z-index: 1;
+            padding: 6px 14px; border: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.7);
+            border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.72rem;
+            font-weight: 500; color: var(--text-secondary); backdrop-filter: blur(4px);
+            transition: all var(--transition);
+        }
+        .sav-balance-card {
+            background: linear-gradient(135deg, #EDF2F7 0%, #F0ECF5 50%, #F5F0ED 100%);
+            border-radius: var(--radius-lg); padding: 28px 32px;
+            border: 1px solid #E0DDE8; position: relative; overflow: hidden;
+            cursor: pointer; transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+        .sav-balance-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); transform: translateY(-1px); }
+        .sav-balance-card::before {
+            content: ''; position: absolute; top: -20px; right: -20px;
+            width: 100px; height: 100px; border-radius: 50%;
+            background: rgba(174,208,232,0.15);
+        }
+        .sav-balance-date {
+            font-size: 0.65rem; color: var(--text-muted); margin-top: 6px;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .savings-edit:hover { background: white; color: var(--text); border-color: rgba(0,0,0,0.15); }
+
+        /* ── Section ── */
+        .section { margin-bottom: 32px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+        .section-title { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; }
+        .section-count { font-size: 0.72rem; color: var(--text-muted); font-weight: 400; margin-left: 8px; }
+
+        /* ── Buttons ── */
+        .btn {
+            padding: 8px 16px; border: 1px solid var(--border); background: var(--surface);
+            border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.78rem;
+            font-weight: 500; color: var(--text-secondary); transition: all var(--transition);
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn:hover { background: var(--surface-hover); color: var(--text); border-color: #DDD; }
+        .btn-primary { background: var(--text); color: white; border-color: var(--text); }
+        .btn-primary:hover { background: #404040; border-color: #404040; color: white; }
+        .btn-ghost { border: none; background: none; padding: 6px 10px; }
+        .btn-ghost:hover { background: var(--surface-hover); }
+        .btn-danger { color: var(--danger-text); }
+        .btn-danger:hover { background: #FEF0EE; color: var(--danger-text); }
+        .btn-sm { padding: 5px 10px; font-size: 0.72rem; }
+        .btn-icon { width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+
+        /* ── Paid toggle ── */
+        .paid-toggle {
+            width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--border);
+            background: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all var(--transition); flex-shrink: 0; font-size: 0.65rem; color: transparent;
+        }
+        .paid-toggle:hover { border-color: var(--accent); }
+        .paid-toggle.checked { background: var(--accent); border-color: var(--accent); color: white; }
+        tr.row-paid td { opacity: 0.45; }
+        tr.row-paid td:first-child { text-decoration: line-through; }
+        tr.row-paid .paid-toggle { opacity: 1; }
+
+        /* ── Selection bar ── */
+        .sel-check {
+            width: 16px; height: 16px; border-radius: 4px; border: 2px solid var(--border);
+            background: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all var(--transition); flex-shrink: 0; font-size: 0.6rem; color: transparent;
+        }
+        .sel-check:hover { border-color: var(--text); }
+        .sel-check.checked { background: var(--text); border-color: var(--text); color: white; }
+        .sel-bar {
+            display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+            background: var(--text); color: white; border-radius: var(--radius);
+            margin-bottom: 10px; font-size: 0.78rem; font-weight: 500;
+            animation: slideUp 0.2s ease;
+        }
+        .sel-bar button {
+            padding: 4px 12px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.12);
+            color: white; border-radius: 16px; font-family: inherit; font-size: 0.72rem;
+            font-weight: 600; cursor: pointer; transition: all var(--transition);
+        }
+        .sel-bar button:hover { background: rgba(255,255,255,0.25); }
+        tr.row-selected { background: rgba(44,44,44,0.04); }
+
+        /* ── Sortable headers ── */
+        .th-sort {
+            cursor: pointer; user-select: none; white-space: nowrap;
+            transition: color var(--transition);
+        }
+        .th-sort:hover { color: var(--text); }
+        .th-sort .sort-arrow { font-size: 0.55rem; margin-left: 3px; opacity: 0.3; }
+        .th-sort.sort-active .sort-arrow { opacity: 1; color: var(--text); }
+
+        /* ── Sub tabs ── */
+        .sub-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+        .sub-tab {
+            padding: 5px 14px; border: 1px solid var(--border); background: none;
+            border-radius: 20px; cursor: pointer; font-family: inherit; font-size: 0.72rem;
+            font-weight: 500; color: var(--text-muted); transition: all var(--transition);
+        }
+        .sub-tab:hover { color: var(--text-secondary); border-color: #CCC; }
+        .sub-tab.active { background: var(--text); color: white; border-color: var(--text); }
+
+        /* ── Expense Filters ── */
+        .exp-filters {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center;
+        }
+        .search-input {
+            padding: 5px 12px; border: 1px solid var(--border); border-radius: 20px;
+            font-family: inherit; font-size: 0.72rem; font-weight: 500; color: var(--text);
+            background: white; outline: none; transition: all var(--transition); width: 160px;
+        }
+        .search-input:focus { border-color: var(--text); box-shadow: 0 0 0 2px rgba(44,44,44,0.06); width: 200px; }
+        .search-input::placeholder { color: var(--text-muted); }
+        .exp-filter-select {
+            padding: 5px 10px; border: 1px solid var(--border); border-radius: 20px;
+            font-family: inherit; font-size: 0.72rem; font-weight: 500; color: var(--text-secondary);
+            background: white; cursor: pointer; outline: none; transition: all var(--transition);
+            appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 8px center;
+            padding-right: 22px;
+        }
+        .exp-filter-select:hover { border-color: #CCC; }
+        .exp-filter-select:focus { border-color: var(--text); box-shadow: 0 0 0 2px rgba(44,44,44,0.06); }
+        .exp-filter-select.active { background-color: var(--text); color: white; border-color: var(--text);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='white'/%3E%3C/svg%3E");
+        }
+        .exp-filter-clear {
+            padding: 4px 10px; border: none; background: none; cursor: pointer;
+            font-family: inherit; font-size: 0.68rem; color: var(--text-muted); border-radius: 12px;
+            transition: all var(--transition);
+        }
+        .exp-filter-clear:hover { background: var(--surface-alt); color: var(--text-secondary); }
+
+        /* ── Table ── */
+        .table-wrap { border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+        .overflow-table { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            font-size: 0.67rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
+            color: var(--text-muted); text-align: left; padding: 10px 20px;
+            border-bottom: 1px solid var(--border-light); background: var(--surface-alt);
+        }
+        tbody td { padding: 13px 20px; font-size: 0.82rem; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+        tbody tr { transition: background var(--transition); }
+        tbody tr:hover { background: var(--surface-alt); }
+        tbody tr:last-child td { border-bottom: none; }
+        .td-amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+        .td-actions { display: flex; gap: 2px; justify-content: flex-end; }
+        .td-editable {
+            cursor: pointer; border-radius: 4px; padding: 2px 4px; margin: -2px -4px;
+            transition: background 0.15s ease;
+        }
+        .td-editable:hover { background: rgba(0,0,0,0.04); }
+        .td-inline-input {
+            width: 100%; padding: 4px 6px; border: 1px solid var(--accent); border-radius: 4px;
+            font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit;
+            outline: none; background: white; box-shadow: 0 0 0 2px rgba(168,197,176,0.2);
+        }
+        .td-inline-select {
+            padding: 3px 4px; border: 1px solid var(--accent); border-radius: 4px;
+            font-family: inherit; font-size: 0.75rem; outline: none; background: white;
+            box-shadow: 0 0 0 2px rgba(168,197,176,0.2); cursor: pointer;
+        }
+        .total-row {
+            padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;
+            font-weight: 600; font-size: 0.85rem; border-top: 1px solid var(--border-light); background: var(--surface-alt);
+        }
+        .total-row .total-label { color: var(--text-secondary); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+        /* ── Badges ── */
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.68rem; font-weight: 500; }
+        .badge-card { padding: 3px 10px; font-weight: 600; color: var(--text); border-radius: 6px; }
+
+        /* ── Credit Cards Grid ── */
+        .cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+        .cc-card {
+            border-radius: var(--radius); padding: 18px; border: 1px solid var(--border-light);
+            background: var(--surface-alt); transition: box-shadow var(--transition);
+        }
+        .cc-card:hover { box-shadow: var(--shadow-sm); }
+        .cc-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .cc-card-name { font-weight: 600; font-size: 0.82rem; display: flex; align-items: center; gap: 8px; }
+        .cc-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .cc-card-cut { font-size: 0.68rem; color: var(--text-muted); }
+        .cc-card-total { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+        .cc-card-detail {
+            font-size: 0.72rem; color: var(--text-secondary); display: flex;
+            justify-content: space-between; padding: 5px 0; border-top: 1px solid var(--border-light);
+        }
+        .cc-card-detail:first-of-type { border-top: none; }
+        .cc-month-group { margin-top: 6px; }
+        .cc-month-group:first-of-type { margin-top: 0; }
+        .cc-month-label {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 8px; margin: 0 -4px; border-radius: 6px;
+            background: var(--surface-alt); font-size: 0.68rem; font-weight: 600;
+            color: var(--text-secondary); letter-spacing: 0.02em;
+        }
+        .cc-month-group .cc-card-detail { padding-left: 4px; }
+        .cc-card-actions { display: flex; gap: 4px; margin-top: 10px; justify-content: flex-end; }
+        .cc-card-actions button {
+            padding: 4px 8px; border: none; background: none; cursor: pointer;
+            font-size: 0.68rem; color: var(--text-muted); border-radius: 4px;
+            font-family: inherit; transition: all var(--transition);
+        }
+        .cc-card-actions button:hover { background: var(--surface-hover); color: var(--text-secondary); }
+        .cc-card-actions .del:hover { background: #FEF0EE; color: var(--danger-text); }
+        .cc-total-bar {
+            margin-top: 16px; padding: 14px 0; border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* ── Charts ── */
+        .chart-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+        .chart-tab {
+            padding: 5px 14px; border: 1px solid var(--border); background: none;
+            border-radius: 20px; font-family: inherit; font-size: 0.72rem;
+            font-weight: 500; color: var(--text-secondary); cursor: pointer;
+            transition: all var(--transition);
+        }
+        .chart-tab:hover { border-color: #CCC; }
+        .chart-tab.active { background: var(--text); color: white; border-color: var(--text); }
+        .chart-container { display: flex; gap: 24px; flex-wrap: wrap; }
+        .chart-box {
+            flex: 1; min-width: 300px; border: 1px solid var(--border-light);
+            border-radius: var(--radius); padding: 18px; background: var(--surface);
+        }
+        .chart-box-title { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.04em; }
+        .chart-bar-row {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+            position: relative; cursor: pointer; padding: 3px 0; border-radius: 6px;
+            transition: background var(--transition);
+        }
+        .chart-bar-row:hover { background: var(--surface-alt); }
+        .chart-bar-label { min-width: 100px; font-size: 0.72rem; font-weight: 500; color: var(--text-secondary); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .chart-bar-track { flex: 1; height: 22px; background: var(--surface-alt); border-radius: 6px; overflow: hidden; position: relative; }
+        .chart-bar-fill {
+            height: 100%; border-radius: 6px; transition: width 0.5s ease, filter 0.2s ease;
+            display: flex; align-items: center; padding-left: 8px; font-size: 0.62rem;
+            font-weight: 600; color: white; white-space: nowrap; min-width: fit-content;
+        }
+        .chart-bar-row:hover .chart-bar-fill { filter: brightness(0.9); }
+        .chart-bar-value { font-size: 0.72rem; font-weight: 600; color: var(--text); min-width: 90px; text-align: right; }
+        .chart-tooltip {
+            display: none; position: absolute; bottom: calc(100% + 6px); left: 50%;
+            transform: translateX(-50%); background: var(--text); color: white;
+            padding: 8px 14px; border-radius: 8px; font-size: 0.7rem; line-height: 1.5;
+            white-space: nowrap; z-index: 20; pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .chart-tooltip::after {
+            content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+            border: 5px solid transparent; border-top-color: var(--text);
+        }
+        .chart-bar-row:hover .chart-tooltip { display: block; }
+        .chart-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .chart-legend-item { display: flex; align-items: center; gap: 4px; font-size: 0.68rem; color: var(--text-secondary); cursor: pointer; padding: 2px 6px; border-radius: 8px; transition: background var(--transition); }
+        .chart-legend-item:hover { background: var(--surface-alt); }
+        .chart-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .chart-donut-wrap { display: flex; align-items: center; gap: 24px; justify-content: center; flex-wrap: wrap; }
+        .chart-donut-wrap svg circle { cursor: pointer; transition: stroke-width 0.2s ease, opacity 0.2s ease; }
+        .chart-donut-wrap svg circle:hover { stroke-width: 32; opacity: 0.85; }
+        .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none; }
+        .donut-center .donut-val { font-size: 0.82rem; font-weight: 700; color: var(--text); }
+        .donut-center .donut-lbl { font-size: 0.6rem; color: var(--text-muted); }
+        .chip-filter-wrap { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .chip-filter {
+            display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px;
+            border: 1px solid var(--border); border-radius: 20px; font-family: inherit;
+            font-size: 0.7rem; font-weight: 500; color: var(--text-secondary);
+            background: white; cursor: pointer; transition: all var(--transition); user-select: none;
+        }
+        .chip-filter:hover { border-color: #BBB; background: var(--surface-alt); }
+        .chip-filter.active { background: var(--text); color: white; border-color: var(--text); }
+
+        /* ── Comment icon ── */
+        .td-comment-icon {
+            cursor: pointer; font-size: 0.85rem; opacity: 0.3; transition: all var(--transition);
+        }
+        .td-comment-icon:hover { opacity: 0.7; transform: scale(1.15); }
+        .td-comment-icon.has-comment { opacity: 0.85; }
+
+        /* ── Empty State ── */
+        .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+        .empty-state p { font-size: 0.82rem; }
+        .empty-state .empty-icon { font-size: 2rem; margin-bottom: 12px; opacity: 0.3; }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.15); backdrop-filter: blur(4px);
+            z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal {
+            background: white; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
+            width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; overflow-x: visible;
+            transform: translateY(12px) scale(0.98); transition: transform 0.2s ease;
+        }
+        .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 24px 0; }
+        .modal-header h3 { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; }
+        .modal-body { padding: 20px 24px; }
+        .modal-footer { padding: 12px 24px 24px; display: flex; gap: 8px; justify-content: flex-end; }
+
+        /* ── Form ── */
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+            font-family: inherit; font-size: 0.82rem; color: var(--text); background: white;
+            transition: border-color var(--transition); outline: none;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--text); box-shadow: 0 0 0 3px rgba(44,44,44,0.06); }
+        .form-group textarea { line-height: 1.6; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* ── Custom Category Picker ── */
+        .cat-picker { position: relative; }
+        .cat-picker-trigger {
+            width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+            font-family: inherit; font-size: 0.82rem; color: var(--text); background: white;
+            cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+            transition: border-color var(--transition); min-height: 38px;
+        }
+        .cat-picker-trigger:hover { border-color: #DDD; }
+        .cat-picker-trigger.open { border-color: var(--text); box-shadow: 0 0 0 3px rgba(44,44,44,0.06); }
+        .cat-picker-trigger .arrow { font-size: 0.6rem; color: var(--text-muted); transition: transform var(--transition); }
+        .cat-picker-trigger.open .arrow { transform: rotate(180deg); }
+        .cat-picker-dd {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+            background: white; border: 1px solid var(--border); border-radius: 10px;
+            box-shadow: var(--shadow-md); z-index: 50; max-height: 280px;
+            display: flex; flex-direction: column; overflow: hidden;
+            opacity: 0; pointer-events: none; transform: translateY(-4px);
+            transition: all 0.15s ease;
+        }
+        .cat-picker-dd.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+        .cat-picker-list { flex: 1; overflow-y: auto; padding: 6px; }
+        .cat-picker-item {
+            display: flex; align-items: center; justify-content: space-between; padding: 7px 10px;
+            border-radius: 6px; cursor: pointer; transition: background var(--transition); gap: 8px;
+        }
+        .cat-picker-item:hover { background: var(--surface-alt); }
+        .cat-picker-item.selected { background: var(--surface-hover); }
+        .cat-picker-item .cat-label {
+            display: flex; align-items: center; gap: 8px; font-size: 0.8rem; flex: 1; min-width: 0;
+        }
+        .cat-picker-item .cat-dot { width: 8px; height: 8px; border-radius: 3px; flex-shrink: 0; }
+        .cat-picker-item .cat-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cat-picker-item .cat-actions {
+            display: flex; gap: 2px; opacity: 0; transition: opacity var(--transition); flex-shrink: 0;
+        }
+        .cat-picker-item:hover .cat-actions { opacity: 1; }
+        .cat-picker-item .cat-btn {
+            width: 22px; height: 22px; border: none; background: none; cursor: pointer;
+            color: var(--text-muted); font-size: 0.7rem; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: all var(--transition);
+        }
+        .cat-picker-item .cat-btn:hover { background: var(--surface-hover); }
+        .cat-picker-item .cat-btn.del:hover { background: #FEF0EE; color: var(--danger-text); }
+        .cat-picker-footer {
+            border-top: 1px solid var(--border-light); padding: 8px;
+            display: flex; gap: 6px;
+        }
+        .cat-picker-footer input {
+            flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+            font-family: inherit; font-size: 0.78rem; outline: none; background: var(--surface-alt);
+        }
+        .cat-picker-footer input:focus { border-color: var(--text); background: white; }
+        .cat-picker-footer button {
+            padding: 6px 12px; border: none; background: var(--text); color: white;
+            border-radius: 6px; font-family: inherit; font-size: 0.72rem; font-weight: 600;
+            cursor: pointer; white-space: nowrap; transition: background var(--transition);
+        }
+        .cat-picker-footer button:hover { background: #404040; }
+
+        /* ── Account Picker (reuses cat-picker structure) ── */
+        .acc-picker-item .acc-actions {
+            display: flex; gap: 2px; opacity: 0; transition: opacity var(--transition);
+        }
+        .acc-picker-item:hover .acc-actions { opacity: 1; }
+        .acc-picker-item .acc-btn {
+            width: 22px; height: 22px; border: none; background: none; cursor: pointer;
+            color: var(--text-muted); font-size: 0.7rem; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .acc-picker-item .acc-btn:hover { background: var(--surface-hover); }
+        .acc-picker-item .acc-btn.del:hover { background: #FEF0EE; color: var(--danger-text); }
+
+        /* ── Responsive ── */
+        @media (max-width: 700px) {
+            .app { padding: 20px 16px 60px; }
+            header { margin-bottom: 24px; }
+            .logo h1 { font-size: 1.15rem; }
+            .summary-row { grid-template-columns: 1fr; gap: 10px; }
+            .stat-card { padding: 16px 18px; }
+            .stat-card .value { font-size: 1.1rem; }
+            .savings-row { grid-template-columns: 1fr; }
+            .savings-card { padding: 22px 20px; }
+            .sav-balance-card { padding: 22px 20px; }
+            .savings-balance { font-size: 1.5rem; }
+            thead th, tbody td { padding: 10px 14px; font-size: 0.78rem; }
+            .cc-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .nav-wrapper { padding: 12px 14px; }
+            .nav-top { flex-wrap: wrap; }
+            .nav-actions { width: 100%; }
+            .nav-filter { flex: 1; }
+            .tabs-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+            .tab-item { padding: 8px 10px; font-size: 0.72rem; }
+        }
+
+        .fade-in { animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .auth-overlay { position:fixed; inset:0; background:var(--bg); z-index:9999; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; }
+        .auth-card { background:var(--surface); border-radius:20px; padding:48px 40px; box-shadow:0 8px 40px rgba(0,0,0,0.08); width:380px; max-width:90vw; text-align:center; }
+        .auth-card h1 { font-size:1.5rem; font-weight:700; color:var(--text); margin-bottom:6px; }
+        .auth-card p { font-size:0.85rem; color:var(--text-secondary); margin-bottom:28px; }
+        .auth-card input { width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:12px; font-family:inherit; font-size:0.9rem; outline:none; transition:border-color var(--transition); margin-bottom:12px; background:var(--surface-alt); color:var(--text); }
+        .auth-card input:focus { border-color:var(--accent-dark); }
+        .auth-card .auth-btn { width:100%; padding:13px; border:none; border-radius:12px; background:var(--accent); color:var(--accent-text); font-family:inherit; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all var(--transition); margin-top:4px; }
+        .auth-card .auth-btn:hover { background:var(--accent-dark); color:white; }
+        .auth-card .auth-toggle { font-size:0.8rem; color:var(--text-secondary); margin-top:18px; }
+        .auth-card .auth-toggle a { color:var(--accent-text); cursor:pointer; font-weight:600; text-decoration:none; }
+        .auth-card .auth-toggle a:hover { text-decoration:underline; }
+        .auth-card .auth-error { font-size:0.78rem; color:var(--danger-text); background:rgba(232,175,168,0.15); padding:8px 12px; border-radius:8px; margin-bottom:12px; display:none; }
+        .auth-card .auth-success { font-size:0.78rem; color:var(--accent-text); background:rgba(184,212,200,0.2); padding:8px 12px; border-radius:8px; margin-bottom:12px; display:none; }
+        .auth-card .auth-logo { font-size:2.5rem; margin-bottom:12px; }
+        .auth-user-bar { position:fixed; top:12px; right:16px; z-index:100; display:flex; align-items:center; gap:8px; font-size:0.72rem; color:var(--text-secondary); }
+        .auth-user-bar button { padding:4px 12px; border:1px solid var(--border); border-radius:16px; background:white; font-family:inherit; font-size:0.7rem; font-weight:500; color:var(--text-secondary); cursor:pointer; transition:all var(--transition); }
+        .auth-user-bar button:hover { border-color:var(--danger); color:var(--danger-text); }
+        .sync-indicator { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+        .sync-ok { background:#8BC49E; }
+        .sync-saving { background:#F0D4A8; }
+        .sync-error { background:#E8AFA8; }
+    </style>
+</head>
+<body>
+<div class="auth-overlay" id="auth-overlay">
+    <div class="auth-card">
+        <div class="auth-logo">💰</div>
+        <h1 id="auth-title">Iniciar Sesión</h1>
+        <p id="auth-subtitle">Accede a tu dashboard de finanzas</p>
+        <div class="auth-error" id="auth-error"></div>
+        <div class="auth-success" id="auth-success"></div>
+        <input type="email" id="auth-email" placeholder="Correo electrónico" autocomplete="email">
+        <input type="password" id="auth-password" placeholder="Contraseña" autocomplete="current-password">
+        <button class="auth-btn" id="auth-btn" onclick="handleAuth()">Iniciar Sesión</button>
+        <div class="auth-toggle" id="auth-toggle">¿No tienes cuenta? <a onclick="toggleAuthMode()">Registrarse</a></div>
+    </div>
+</div>
+<div class="auth-user-bar" id="user-bar" style="display:none">
+    <span id="sync-status"></span>
+    <span id="user-email"></span>
+    <button onclick="handleLogout()">Salir</button>
+</div>
+<div class="app" id="app"></div>
+<div class="modal-overlay" id="modal-overlay"><div class="modal" id="modal"></div></div>
+<div class="dropdown" id="tab-dropdown"></div>
+
+<script>
+/* ══════════ SUPABASE CONFIG ══════════ */
+const SUPABASE_URL = 'https://kvajbjhmxeuewyvercml.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2YWpiamhteGV1ZXd5dmVyY21sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MTU5MDMsImV4cCI6MjA4Nzk5MTkwM30.h8kBuF8H3O5V8IjI4-Xu3MmIqbUoCw1lJNC7KDKiBok';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let authMode = 'login';
+let syncStatus = 'ok';
+
+async function handleAuth() {
+    const email = document.getElementById('auth-email').value.trim();
+    const pass = document.getElementById('auth-password').value;
+    const errEl = document.getElementById('auth-error');
+    const okEl = document.getElementById('auth-success');
+    errEl.style.display = 'none';
+    okEl.style.display = 'none';
+    if (!email || !pass) { errEl.textContent = 'Completa todos los campos'; errEl.style.display = 'block'; return; }
+    if (pass.length < 6) { errEl.textContent = 'La contraseña debe tener al menos 6 caracteres'; errEl.style.display = 'block'; return; }
+    try {
+        document.getElementById('auth-btn').textContent = 'Cargando...';
+        let res;
+        if (authMode === 'login') {
+            res = await supabase.auth.signInWithPassword({ email, password: pass });
+        } else {
+            res = await supabase.auth.signUp({ email, password: pass });
+            if (!res.error && res.data?.user?.identities?.length === 0) {
+                res.error = { message: 'Este correo ya está registrado' };
+            }
+            if (!res.error) {
+                okEl.textContent = 'Cuenta creada. Revisa tu correo para confirmar o inicia sesión.';
+                okEl.style.display = 'block';
+                document.getElementById('auth-btn').textContent = authMode === 'login' ? 'Iniciar Sesión' : 'Registrarse';
+                return;
+            }
+        }
+        if (res.error) {
+            const msg = res.error.message.includes('Invalid login') ? 'Correo o contraseña incorrectos' : res.error.message;
+            errEl.textContent = msg;
+            errEl.style.display = 'block';
+            document.getElementById('auth-btn').textContent = authMode === 'login' ? 'Iniciar Sesión' : 'Registrarse';
+            return;
+        }
+        currentUser = res.data.user;
+        await onAuthReady();
+    } catch (e) {
+        errEl.textContent = 'Error de conexión';
+        errEl.style.display = 'block';
+        document.getElementById('auth-btn').textContent = authMode === 'login' ? 'Iniciar Sesión' : 'Registrarse';
+    }
+}
+
+function toggleAuthMode() {
+    authMode = authMode === 'login' ? 'signup' : 'login';
+    document.getElementById('auth-title').textContent = authMode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta';
+    document.getElementById('auth-subtitle').textContent = authMode === 'login' ? 'Accede a tu dashboard de finanzas' : 'Crea tu cuenta para empezar';
+    document.getElementById('auth-btn').textContent = authMode === 'login' ? 'Iniciar Sesión' : 'Registrarse';
+    document.getElementById('auth-toggle').innerHTML = authMode === 'login'
+        ? '¿No tienes cuenta? <a onclick="toggleAuthMode()">Registrarse</a>'
+        : '¿Ya tienes cuenta? <a onclick="toggleAuthMode()">Iniciar Sesión</a>';
+    document.getElementById('auth-error').style.display = 'none';
+    document.getElementById('auth-success').style.display = 'none';
+}
+
+async function handleLogout() {
+    await supabase.auth.signOut();
+    currentUser = null;
+    document.getElementById('auth-overlay').style.display = 'flex';
+    document.getElementById('user-bar').style.display = 'none';
+    document.getElementById('auth-email').value = '';
+    document.getElementById('auth-password').value = '';
+}
+
+function updateSyncUI(status) {
+    syncStatus = status;
+    const el = document.getElementById('sync-status');
+    if (!el) return;
+    const cls = status === 'ok' ? 'sync-ok' : status === 'saving' ? 'sync-saving' : 'sync-error';
+    const tip = status === 'ok' ? 'Sincronizado' : status === 'saving' ? 'Guardando...' : 'Error al sincronizar';
+    el.innerHTML = `<span class="sync-indicator ${cls}" title="${tip}"></span>`;
+}
+
+async function supabaseLoad() {
+    if (!currentUser) return null;
+    try {
+        const { data, error } = await supabase
+            .from('user_data')
+            .select('data')
+            .eq('user_id', currentUser.id)
+            .maybeSingle();
+        if (error) throw error;
+        return data ? data.data : null;
+    } catch (e) {
+        console.warn('Supabase load failed, using localStorage', e);
+        return null;
+    }
+}
+
+let _saveTimer = null;
+async function supabaseSave() {
+    if (!currentUser) return;
+    clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(async () => {
+        updateSyncUI('saving');
+        try {
+            const { error } = await supabase
+                .from('user_data')
+                .upsert({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+            if (error) throw error;
+            updateSyncUI('ok');
+        } catch (e) {
+            console.warn('Supabase save failed', e);
+            updateSyncUI('error');
+        }
+    }, 800);
+}
+
+async function onAuthReady() {
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('user-bar').style.display = 'flex';
+    document.getElementById('user-email').textContent = currentUser.email;
+    updateSyncUI('saving');
+
+    const cloudData = await supabaseLoad();
+    const localRaw = localStorage.getItem(STORAGE_KEY);
+    const localData = localRaw ? JSON.parse(localRaw) : null;
+
+    if (cloudData && cloudData.tabs && cloudData.tabs.length > 0) {
+        state = migrateState(cloudData);
+    } else if (localData && localData.tabs && localData.tabs.length > 0) {
+        state = migrateState(localData);
+        await supabaseSave();
+    } else {
+        state = loadState();
+    }
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    activeTabId = state.tabs[0]?.id || '';
+    updateSyncUI('ok');
+    render();
+}
+
+async function initAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+        currentUser = session.user;
+        await onAuthReady();
+    }
+    document.getElementById('auth-password').addEventListener('keydown', e => { if (e.key === 'Enter') handleAuth(); });
+}
+
+/* ══════════ APP CONSTANTS ══════════ */
+const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const STORAGE_KEY = 'finanzas_personales_v2';
+
+const DEFAULT_CARDS = [
+    { id: 'nu', name: 'Nu', cutDay: 15, color: '#C8B8E8' },
+    { id: 'rappi', name: 'Rappi', cutDay: 30, color: '#D0D0D0' },
+    { id: 'itau', name: 'Itaú', cutDay: 15, color: '#F0C8A0' },
+    { id: 'rappi-moni', name: 'Rappi Moni', cutDay: 30, color: '#D0D0D0' },
+    { id: 'nu-moni', name: 'Nu Moni', cutDay: 25, color: '#C8B8E8' }
+];
+
+const DEFAULT_CATEGORIES = [
+    'Modificable', 'Guardado', 'Inversiones', 'Mascotas', 'Obligación',
+    'Suscripción', 'Comida', 'Ocio', 'Reintegro', 'Mercado',
+    'Viajes', 'Deporte', 'Compras'
+];
+
+const DEFAULT_ACCOUNTS = [
+    { id: 'cuenta-ahorro', name: 'Cuenta ahorro', color: '#B8D4C8' },
+    { id: 'uala', name: 'Ualá', color: '#C8B8E8' },
+    { id: 'lulobank', name: 'LuloBank', color: '#F0D0A8' },
+    { id: 'littio', name: 'Littio', color: '#A8D0E8' },
+    { id: 'paypal', name: 'PayPal', color: '#AEC8F0' }
+];
+
+const CAT_COLORS = [
+    '#FFF3D6', '#D6F0D6', '#D6EEF5', '#F5D6E8', '#E8E8E8',
+    '#E8D6F5', '#FFE5D0', '#D6E2F5', '#F5D6D6', '#F0E5D6',
+    '#FFD9CC', '#D6F5E8', '#E8D6F0', '#FFF0D6', '#D6F5F0',
+    '#F0D6E8', '#E8F0D6', '#D6D6F5', '#F5E8D6', '#D6E8F5'
+];
+
+function getCatColor(cat) {
+    const idx = state.categories.indexOf(cat);
+    return idx >= 0 ? CAT_COLORS[idx % CAT_COLORS.length] : '#F0F0F0';
+}
+
+let state = loadState();
+let activeTabId = state.tabs[0]?.id || '';
+let menuTabId = null;
+let navYear = new Date().getFullYear();
+let navSearch = '';
+let expFilterCard = '';
+let expFilterCat = '';
+let expFilterPaid = '';
+let selectedExpenses = new Set();
+let selectedSavings = new Set();
+let ccFilterMonth = '';
+let expSortCol = '';
+let expSortDir = 'asc';
+let expSearch = '';
+let savSearch = '';
+let chartView = 'category';
+let chartFilterCards = [];
+let chartFilterCats = [];
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+let _searchTimer = null;
+function searchRender(inputId) {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(() => {
+        const el = document.getElementById(inputId);
+        const pos = el ? el.selectionStart : 0;
+        render();
+        requestAnimationFrame(() => {
+            const restored = document.getElementById(inputId);
+            if (restored) { restored.focus(); restored.setSelectionRange(pos, pos); }
+        });
+    }, 150);
+}
+
+function migrateState(p) {
+    if (!p.tabs) p.tabs = defaultTabs();
+    if (!p.expenses) p.expenses = [];
+    if (!p.categories) p.categories = [...DEFAULT_CATEGORIES];
+    if (!p.creditCards) p.creditCards = [...DEFAULT_CARDS];
+    if (!p.savingsAccounts) p.savingsAccounts = [...DEFAULT_ACCOUNTS];
+    if (!p.savings) p.savings = [];
+    if (!p.savingsBalances) p.savingsBalances = {};
+    if (p.savingsBalance != null || p.savingsBalanceDate) {
+        const firstTabId = p.tabs[0] && p.tabs[0].id;
+        if (firstTabId && !p.savingsBalances[firstTabId]) {
+            p.savingsBalances[firstTabId] = { balance: p.savingsBalance || 0, date: p.savingsBalanceDate || '' };
+        }
+        delete p.savingsBalance;
+        delete p.savingsBalanceDate;
+    }
+    const CARD_COLORS = { 'nu': '#C8B8E8', 'rappi': '#D0D0D0', 'itau': '#F0C8A0', 'rappi-moni': '#D0D0D0', 'nu-moni': '#C8B8E8' };
+    for (const c of p.creditCards) { if (CARD_COLORS[c.id]) c.color = CARD_COLORS[c.id]; }
+    if (p.savingsAccount && !p.savings.length) {
+        if (p.savingsAccount.balance > 0) {
+            p.savings.push({ id: uid(), description: p.savingsAccount.name, amount: p.savingsAccount.balance, account: 'cuenta-ahorro', date: p.savingsAccount.lastUpdated || new Date().toISOString().split('T')[0] });
+        }
+        delete p.savingsAccount;
+    }
+    for (const sv of p.savings) {
+        if (sv.deductsFromSavings == null) sv.deductsFromSavings = (sv.account === 'cuenta-ahorro');
+        if (!sv.tabId) sv.tabId = p.tabs[0] && p.tabs[0].id;
+    }
+    for (const exp of p.expenses) {
+        if (!exp.tabId) {
+            const pd = exp.paymentDate || exp.creationDate;
+            if (pd) {
+                const d = new Date(pd + 'T12:00:00');
+                const ey = d.getFullYear(), em = d.getMonth();
+                const matchTab = p.tabs.find(t => t.year === ey && t.month === em);
+                exp.tabId = matchTab ? matchTab.id : (p.tabs[0] && p.tabs[0].id);
+            } else {
+                exp.tabId = p.tabs[0] && p.tabs[0].id;
+            }
+        }
+    }
+    return p;
+}
+
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return migrateState(JSON.parse(raw));
+    } catch (_) {}
+    return {
+        tabs: defaultTabs(),
+        expenses: [],
+        categories: [...DEFAULT_CATEGORIES],
+        creditCards: [...DEFAULT_CARDS],
+        savingsAccounts: [...DEFAULT_ACCOUNTS],
+        savings: [],
+        savingsBalances: {}
+    };
+}
+
+function defaultTabs() {
+    const now = new Date();
+    const m0 = now.getMonth(), y0 = now.getFullYear();
+    const m1 = m0 + 1 > 11 ? 0 : m0 + 1, y1 = m0 + 1 > 11 ? y0 + 1 : y0;
+    return [
+        { id: uid(), name: `${MONTHS_ES[m0]} ${y0}`, year: y0, month: m0 },
+        { id: uid(), name: `${MONTHS_ES[m1]} ${y1}`, year: y1, month: m1 }
+    ];
+}
+
+function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    supabaseSave();
+}
+
+function fmt(n) { return '$' + Number(n).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+function fmtInput(n) {
+    if (n === '' || n == null || isNaN(n)) return '';
+    return Number(n).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+function parseFmtInput(s) {
+    if (!s && s !== 0) return 0;
+    let str = String(s).trim();
+    if (!str) return 0;
+    str = str.replace(/\$/g, '').replace(/\s/g, '');
+    if (str.includes(',')) {
+        str = str.replace(/\./g, '').replace(',', '.');
+    } else {
+        const dots = str.split('.').length - 1;
+        if (dots === 1) {
+            const afterDot = str.split('.')[1];
+            if (afterDot.length <= 2) return parseFloat(str) || 0;
+        }
+        str = str.replace(/\./g, '');
+    }
+    return parseFloat(str) || 0;
+}
+function setupPriceInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.value && !isNaN(el.value)) el.value = fmtInput(el.value);
+    el.addEventListener('focus', function() {
+        const raw = parseFmtInput(this.value);
+        this.value = raw > 0 ? raw : '';
+    });
+    el.addEventListener('blur', function() {
+        const raw = parseFmtInput(this.value);
+        this.value = raw > 0 ? fmtInput(raw) : '';
+    });
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+function fmtDate(ds) { if (!ds) return ''; const [y,m,d] = ds.split('-'); return `${d}/${m}/${y}`; }
+
+function activeTab() { return state.tabs.find(t => t.id === activeTabId) || state.tabs[0]; }
+
+function getPaymentMonth(dateStr, cutDay) {
+    const d = new Date(dateStr + 'T12:00:00');
+    const day = d.getDate(), month = d.getMonth(), year = d.getFullYear();
+    if (day <= cutDay) return { year, month };
+    let nm = month + 1, ny = year;
+    if (nm > 11) { nm = 0; ny++; }
+    return { year: ny, month: nm };
+}
+
+function getExpensesForTab(tabId) {
+    return state.expenses
+        .filter(exp => exp.tabId === tabId)
+        .map(exp => {
+            const amt = (exp.payPrice != null && exp.payPrice > 0) ? exp.payPrice : exp.totalPrice;
+            return { ...exp, payAmount: amt };
+        });
+}
+
+function autoPayDate(creationDate, cardId) {
+    if (!creationDate || !cardId || cardId === 'efectivo') return creationDate || '';
+    const card = state.creditCards.find(c => c.id === cardId);
+    if (!card) return creationDate;
+    const pm = getPaymentMonth(creationDate, card.cutDay);
+    return `${pm.year}-${String(pm.month + 1).padStart(2, '0')}-01`;
+}
+
+function defaultDate() {
+    const tab = activeTab();
+    if (!tab) return new Date().toISOString().split('T')[0];
+    const day = Math.min(new Date().getDate(), 28);
+    return `${tab.year}-${String(tab.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+/* ══════════ RENDER ══════════ */
+function render() {
+    const tab = activeTab();
+    if (!tab) return;
+    const expenses = getExpensesForTab(tab.id);
+    const ccExpenses = expenses.filter(e => e.creditCard && e.creditCard !== 'efectivo');
+    const totalExp = expenses.reduce((s, e) => s + e.payAmount, 0);
+    const totalCC = ccExpenses.reduce((s, e) => s + e.payAmount, 0);
+    const displayCC = ccExpenses;
+
+    let ccByCard = {};
+    const ccAllMonths = new Set();
+    for (const card of state.creditCards) ccByCard[card.id] = { card, expenses: [], total: 0, byMonth: {} };
+    for (const e of displayCC) {
+        if (ccByCard[e.creditCard]) {
+            const pd = e.paymentDate;
+            const mk = pd ? pd.substring(0, 7) : 'sin-fecha';
+            ccAllMonths.add(mk);
+            if (!ccByCard[e.creditCard].byMonth[mk]) ccByCard[e.creditCard].byMonth[mk] = { items: [], total: 0 };
+            ccByCard[e.creditCard].byMonth[mk].items.push(e);
+            ccByCard[e.creditCard].byMonth[mk].total += e.payAmount;
+            if (!ccFilterMonth || mk === ccFilterMonth) {
+                ccByCard[e.creditCard].expenses.push(e);
+                ccByCard[e.creditCard].total += e.payAmount;
+            }
+        }
+    }
+    const ccMonthsSorted = [...ccAllMonths].sort();
+    const ccGrandTotal = Object.values(ccByCard).reduce((s, d) => s + d.total, 0);
+
+    const unpaidExp = expenses.filter(e => !e.paid);
+    const paidExp = expenses.filter(e => e.paid);
+    const totalUnpaid = unpaidExp.reduce((s, e) => s + e.payAmount, 0);
+    const totalPaid = paidExp.reduce((s, e) => s + e.payAmount, 0);
+
+    const tabSavings = state.savings.filter(sv => sv.tabId === tab.id);
+    const totalSavings = tabSavings.reduce((s, sv) => s + Number(sv.amount), 0);
+    const savByAccount = {};
+    for (const acc of state.savingsAccounts) savByAccount[acc.id] = { acc, total: 0, items: [] };
+    for (const sv of tabSavings) {
+        if (savByAccount[sv.account]) { savByAccount[sv.account].total += Number(sv.amount); savByAccount[sv.account].items.push(sv); }
+    }
+    const cuentaAhorroTotal = tabSavings.filter(sv => sv.deductsFromSavings).reduce((s, sv) => s + Number(sv.amount), 0);
+    const otrasCuentasTotal = totalSavings - cuentaAhorroTotal;
+    const tabBal = state.savingsBalances[tab.id] || { balance: 0, date: '' };
+    const mySavingsBalance = tabBal.balance || 0;
+    const savingsBalanceDate = tabBal.date || '';
+    const disponibleCuentaAhorro = mySavingsBalance - totalUnpaid - cuentaAhorroTotal;
+
+    document.getElementById('app').innerHTML = `
+        <div class="hero fade-in">
+            <div class="hero-bubble b1"></div>
+            <div class="hero-bubble b2"></div>
+            <div class="hero-bubble b3"></div>
+            <div class="hero-bubble b4"></div>
+            <div class="hero-bubble b5"></div>
+            <div class="hero-sparkle s1"></div>
+            <div class="hero-sparkle s2"></div>
+            <div class="hero-sparkle s3"></div>
+            <div class="hero-top">
+                <div class="hero-text">
+                    <h1>💰 Finanzas Personales</h1>
+                    <p>✨ Tu dinero, organizado y bajo control</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-sm" onclick="exportData()">📥 Exportar</button>
+                    <button class="btn btn-sm" onclick="document.getElementById('imp').click()">📤 Importar</button>
+                    <input type="file" id="imp" accept=".json" style="display:none" onchange="importData(event)">
+                </div>
+            </div>
+            <div class="mockup">
+                <div class="mockup-laptop">
+                    <div class="mockup-bezel">
+                        <div class="mockup-dot" style="background:#FF6058"></div>
+                        <div class="mockup-dot" style="background:#FFBD2E"></div>
+                        <div class="mockup-dot" style="background:#27CA40"></div>
+                    </div>
+                    <div class="mockup-screen">
+                        <div class="ms-row">
+                            <div class="ms-card">
+                                <div class="ms-label">🏦 Ahorro</div>
+                                <div class="ms-value" style="color:#5A8A72">${fmt(totalSavings)}</div>
+                                <div class="ms-bar" style="background:linear-gradient(90deg,#B8D4C8 ${Math.min(100, totalSavings > 0 ? 100 : 0)}%,#EEEEEE ${Math.min(100, totalSavings > 0 ? 100 : 0)}%)"></div>
+                            </div>
+                            <div class="ms-card">
+                                <div class="ms-label">⏳ Pendiente</div>
+                                <div class="ms-value" style="color:#C06B60">${fmt(totalUnpaid)}</div>
+                                <div class="ms-bar" style="background:linear-gradient(90deg,#E8AFA8 ${totalExp > 0 ? Math.min(100, (totalUnpaid/totalExp)*100) : 0}%,#EEEEEE ${totalExp > 0 ? Math.min(100, (totalUnpaid/totalExp)*100) : 0}%)"></div>
+                            </div>
+                            <div class="ms-card">
+                                <div class="ms-label">💵 Disponible</div>
+                                <div class="ms-value" style="color:${disponibleCuentaAhorro >= 0 ? '#5A8A72' : '#C06B60'}">${fmt(disponibleCuentaAhorro)}</div>
+                                <div class="ms-bar" style="background:linear-gradient(90deg,${disponibleCuentaAhorro >= 0 ? '#B8D4C8' : '#E8AFA8'} ${mySavingsBalance > 0 ? Math.min(100, Math.max(0, (disponibleCuentaAhorro/mySavingsBalance)*100)) : 0}%,#EEEEEE ${mySavingsBalance > 0 ? Math.min(100, Math.max(0, (disponibleCuentaAhorro/mySavingsBalance)*100)) : 0}%)"></div>
+                            </div>
+                        </div>
+                        <div class="ms-table">
+                            ${state.creditCards.slice(0, 4).map(c => {
+                                const cTotal = ccByCard[c.id]?.total || 0;
+                                return `<div class="ms-table-row">
+                                    <span class="ms-table-label"><span class="ms-dot" style="background:${c.color}"></span>${c.name}</span>
+                                    <span class="ms-table-val">${fmt(cTotal)}</span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="mockup-base"></div>
+            </div>
+        </div>
+
+        <nav class="nav-wrapper fade-in">
+            <div class="nav-top">
+                <div class="nav-year-group">
+                    <button class="nav-arrow" onclick="navYear--;render()">◂</button>
+                    <span class="nav-year">${navYear}</span>
+                    <button class="nav-arrow" onclick="navYear++;render()">▸</button>
+                </div>
+                <div class="nav-actions">
+                    <input class="nav-filter" type="text" placeholder="🔍 Buscar pestaña..." value="${esc(navSearch)}" oninput="navSearch=this.value;render()" style="width:140px">
+                    <button class="tab-add" onclick="addTabModal()">➕ Nueva</button>
+                </div>
+            </div>
+            <div class="tabs-grid">
+                ${(() => {
+                    const filtered = state.tabs.filter(t => {
+                        if (t.year !== navYear) return false;
+                        if (navSearch && !t.name.toLowerCase().includes(navSearch.toLowerCase())) return false;
+                        return true;
+                    }).sort((a, b) => a.month - b.month);
+                    if (filtered.length === 0) return `<div class="tab-empty">📭 Sin pestañas para ${navYear}${navSearch ? ` con "${esc(navSearch)}"` : ''}</div>`;
+                    return filtered.map(t => `
+                        <div class="tab-item ${t.id === activeTabId ? 'active' : ''}" onclick="setTab('${t.id}')">
+                            <span class="tab-name">${esc(t.name)}</span>
+                            <button class="tab-menu-btn" onclick="event.stopPropagation();showTabMenu(event,'${t.id}')">⋯</button>
+                        </div>
+                    `).join('');
+                })()}
+            </div>
+        </nav>
+
+        <!-- Savings Cards Row -->
+        <div class="savings-row fade-in">
+            <div class="savings-card" style="margin-bottom:0">
+                <button class="savings-edit" onclick="openSavingEntryModal()">➕ Agregar</button>
+                <div class="savings-label">🏦 Ahorro Total</div>
+                <div class="savings-balance">${fmt(totalSavings)}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;position:relative;z-index:1">
+                    ${state.savingsAccounts.map(acc => {
+                        const d = savByAccount[acc.id];
+                        if (!d || d.total === 0) return '';
+                        return `<div style="background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.06);border-radius:8px;padding:6px 12px;backdrop-filter:blur(4px)">
+                            <div style="font-size:0.62rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:4px">
+                                <span style="width:6px;height:6px;border-radius:3px;background:${acc.color};display:inline-block"></span>${esc(acc.name)}
+                            </div>
+                            <div style="font-size:0.85rem;font-weight:700;color:var(--accent-text)">${fmt(d.total)}</div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+            <div class="sav-balance-card" onclick="editSavingsBalance()">
+                <div class="savings-label">💰 Cuenta de Ahorros</div>
+                <div class="savings-balance" style="color:${mySavingsBalance > 0 ? 'var(--accent-text)' : 'var(--text-muted)'}">${fmt(mySavingsBalance)}</div>
+                <div style="font-size:0.82rem;font-weight:600;color:${disponibleCuentaAhorro >= 0 ? 'var(--text-secondary)' : 'var(--danger-text)'};margin-top:8px">
+                    💵 Disponible: ${fmt(disponibleCuentaAhorro)}
+                </div>
+                ${savingsBalanceDate ? `<div class="sav-balance-date">📅 Editado: ${fmtDate(savingsBalanceDate)}</div>` : `<div class="sav-balance-date">✏️ Clic para editar</div>`}
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-row fade-in">
+            <div class="stat-card">
+                <div class="label">⏳ Pendiente por Pagar</div>
+                <div class="value" style="color:var(--danger-text)">${fmt(totalUnpaid)}</div>
+                <div class="sub">${unpaidExp.length} pendiente${unpaidExp.length !== 1 ? 's' : ''}${totalPaid > 0 ? ` · ✅ ${fmt(totalPaid)} pagado` : ''}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">💳 Total Tarjetas</div>
+                <div class="value" style="color:var(--warning-text)">${fmt(totalCC)}</div>
+                <div class="sub">${ccExpenses.length} cargo${ccExpenses.length !== 1 ? 's' : ''}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">💵 Disponible Cta. Ahorro</div>
+                <div class="value" style="color:${disponibleCuentaAhorro >= 0 ? 'var(--accent-text)' : 'var(--danger-text)'}">${fmt(disponibleCuentaAhorro)}</div>
+                <div class="sub">💰 ${fmt(mySavingsBalance)} − ⏳ ${fmt(totalUnpaid)} − 🏦 ${fmt(cuentaAhorroTotal)}</div>
+            </div>
+        </div>
+
+        <!-- Savings Detail Section -->
+        <div class="section fade-in">
+            <div class="section-header">
+                <div class="section-title">🏦 Ahorros<span class="section-count">${tabSavings.length}</span></div>
+                <div style="display:flex;gap:6px;align-items:center">
+                    <input class="search-input" id="sav-search" type="text" placeholder="🔍 Buscar ahorro..." value="${esc(savSearch)}" oninput="savSearch=this.value;searchRender('sav-search')">
+                    <button class="btn btn-sm" onclick="openManageAccountsModal()">🏧 Cuentas</button>
+                    <button class="btn btn-primary btn-sm" onclick="openSavingEntryModal()">➕ Nuevo</button>
+                </div>
+            </div>
+            ${tabSavings.length > 0 ? (() => {
+                let filteredSav = tabSavings;
+                if (savSearch) {
+                    const sq = savSearch.toLowerCase();
+                    filteredSav = filteredSav.filter(sv => (sv.description || '').toLowerCase().includes(sq) || (sv.comment || '').toLowerCase().includes(sq));
+                }
+                const savSelCount = filteredSav.filter(sv => selectedSavings.has(sv.id)).length;
+                const savAllSelected = filteredSav.length > 0 && savSelCount === filteredSav.length;
+                return `
+            ${savSelCount > 0 ? `<div class="sel-bar">
+                <span>✅ ${savSelCount} seleccionado${savSelCount > 1 ? 's' : ''}</span>
+                <button onclick="duplicateSelectedSavings()">📋 Duplicar en otra pestaña</button>
+                <button onclick="selectedSavings.clear();render()">✕ Deseleccionar</button>
+            </div>` : ''}
+            ${savSearch ? `<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:8px">🔍 ${filteredSav.length} resultado${filteredSav.length !== 1 ? 's' : ''} para "${esc(savSearch)}" <button class="exp-filter-clear" onclick="savSearch='';render()">✕</button></div>` : ''}
+            <div class="table-wrap">
+            <div class="overflow-table">
+            <table>
+                <thead><tr>
+                    <th style="width:30px;text-align:center"><div class="sel-check ${savAllSelected ? 'checked' : ''}" onclick="toggleSelectAllSav()" title="Seleccionar todos">✓</div></th>
+                    <th>📝 Descripción</th><th>💲 Monto</th><th>🏧 Cuenta</th><th>📅 Fecha</th><th style="text-align:center" title="Descontar de Cta. Ahorros">📌 Desc.</th><th>💬</th><th style="text-align:right">⚙️</th>
+                </tr></thead>
+                <tbody>
+                    ${filteredSav.map(sv => {
+                        const acc = state.savingsAccounts.find(a => a.id === sv.account);
+                        const isSavSel = selectedSavings.has(sv.id);
+                        return `<tr class="${isSavSel ? 'row-selected' : ''}">
+                            <td style="text-align:center"><div class="sel-check ${isSavSel ? 'checked' : ''}" onclick="toggleSelectSav('${sv.id}')">✓</div></td>
+                            <td><span class="td-editable" onclick="inlineSavEdit(this,'text','${sv.id}','description')" style="font-weight:500">${esc(sv.description)}</span></td>
+                            <td><span class="td-editable td-amount" onclick="inlineSavEdit(this,'money','${sv.id}','amount')" style="color:var(--accent-text)">${fmt(sv.amount)}</span></td>
+                            <td><span class="td-editable" onclick="inlineSavAcc(this,'${sv.id}')">${acc ? `<span class="badge" style="background:${acc.color}">${esc(acc.name)}</span>` : `<span class="badge" style="background:#F0F0F0">—</span>`}</span></td>
+                            <td><span class="td-editable" onclick="inlineSavEdit(this,'date','${sv.id}','date')" style="color:var(--text-muted);font-size:0.75rem">${fmtDate(sv.date)}</span></td>
+                            <td style="text-align:center"><div class="paid-toggle ${sv.deductsFromSavings ? 'checked' : ''}" onclick="toggleSavDeduct('${sv.id}')" title="${sv.deductsFromSavings ? 'Descontando de Cta. Ahorros' : 'No descuenta de Cta. Ahorros'}">✓</div></td>
+                            <td style="text-align:center"><span class="td-comment-icon ${sv.comment ? 'has-comment' : ''}" onclick="openCommentPopup('saving','${sv.id}')" title="${sv.comment ? esc(sv.comment) : 'Agregar comentario'}">💬</span></td>
+                            <td><div class="td-actions">
+                                <button class="btn btn-icon btn-sm btn-ghost btn-danger" onclick="delSaving('${sv.id}')">✕</button>
+                            </div></td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
+            </div>
+            <div class="total-row" style="flex-wrap:wrap;gap:8px">
+                <span class="total-label">🏦 Total Ahorros</span>
+                <span style="color:var(--accent-text);font-size:1rem">${fmt(totalSavings)}</span>
+            </div>
+            <div class="total-row" style="flex-wrap:wrap;gap:8px;border-top:none;padding-top:0;opacity:0.85">
+                <span class="total-label" style="font-size:0.78rem">📌 Cuenta de Ahorros</span>
+                <span style="color:var(--accent-text);font-size:0.88rem">${fmt(cuentaAhorroTotal)}</span>
+                <span style="color:var(--text-muted);font-size:0.72rem;margin-left:4px">·</span>
+                <span class="total-label" style="font-size:0.78rem;margin-left:4px">💼 Otras Cuentas</span>
+                <span style="color:var(--text-secondary);font-size:0.88rem">${fmt(otrasCuentasTotal)}</span>
+            </div>
+            </div>`;
+            })() : `<div class="table-wrap"><div class="empty-state"><div class="empty-icon">🏦</div><p>Sin registros de ahorro</p></div></div>`}
+        </div>
+
+        <!-- Expenses Section -->
+        <div class="section fade-in">
+            <div class="section-header">
+                <div class="section-title">🧾 Gastos<span class="section-count">${expenses.length}</span></div>
+                <button class="btn btn-primary btn-sm" onclick="openExpenseModal()">➕ Nuevo Gasto</button>
+            </div>
+            ${expenses.length > 0 ? (() => {
+                const usedCards = [...new Set(expenses.map(e => e.creditCard))];
+                const usedCats = [...new Set(expenses.map(e => e.category).filter(Boolean))];
+                const hasFilters = expFilterCard || expFilterCat || expFilterPaid || expSearch;
+                let filtered = expenses;
+                if (expSearch) {
+                    const q = expSearch.toLowerCase();
+                    filtered = filtered.filter(e => (e.description || '').toLowerCase().includes(q) || (e.category || '').toLowerCase().includes(q) || (e.comment || '').toLowerCase().includes(q));
+                }
+                if (expFilterCard) filtered = filtered.filter(e => expFilterCard === 'efectivo' ? (!e.creditCard || e.creditCard === 'efectivo') : e.creditCard === expFilterCard);
+                if (expFilterCat) filtered = filtered.filter(e => e.category === expFilterCat);
+                if (expFilterPaid === 'paid') filtered = filtered.filter(e => e.paid);
+                if (expFilterPaid === 'unpaid') filtered = filtered.filter(e => !e.paid);
+                filtered = applySortExp(filtered);
+                const filteredTotal = filtered.reduce((s, e) => s + e.payAmount, 0);
+                const selItems = filtered.filter(e => selectedExpenses.has(e.id));
+                const selCount = selItems.length;
+                const selTotal = selItems.reduce((s, e) => s + e.payAmount, 0);
+                const allSelected = filtered.length > 0 && selCount === filtered.length;
+                return `
+            ${selCount > 0 ? `<div class="sel-bar">
+                <span>✅ ${selCount} seleccionado${selCount > 1 ? 's' : ''}</span>
+                <button onclick="duplicateSelectedToNewTab()">📋 Duplicar en otra pestaña</button>
+                <button onclick="selectedExpenses.clear();render()">✕ Deseleccionar</button>
+            </div>` : ''}
+            <div class="exp-filters">
+                <input class="search-input" id="exp-search" type="text" placeholder="🔍 Buscar gasto..." value="${esc(expSearch)}" oninput="expSearch=this.value;searchRender('exp-search')">
+                <select class="exp-filter-select ${expFilterCard ? 'active' : ''}" onchange="expFilterCard=this.value;render()">
+                    <option value="">💳 Todas las TC</option>
+                    <option value="efectivo" ${expFilterCard === 'efectivo' ? 'selected' : ''}>💵 Efectivo</option>
+                    ${state.creditCards.map(c => `<option value="${c.id}" ${expFilterCard === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+                </select>
+                <select class="exp-filter-select ${expFilterCat ? 'active' : ''}" onchange="expFilterCat=this.value;render()">
+                    <option value="">🏷️ Todas las categorías</option>
+                    ${usedCats.map(c => `<option value="${esc(c)}" ${expFilterCat === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
+                </select>
+                <select class="exp-filter-select ${expFilterPaid ? 'active' : ''}" onchange="expFilterPaid=this.value;render()">
+                    <option value="">📋 Todos</option>
+                    <option value="unpaid" ${expFilterPaid === 'unpaid' ? 'selected' : ''}>⏳ Pendientes</option>
+                    <option value="paid" ${expFilterPaid === 'paid' ? 'selected' : ''}>✅ Pagados</option>
+                </select>
+                ${hasFilters ? `<button class="exp-filter-clear" onclick="expFilterCard='';expFilterCat='';expFilterPaid='';expSearch='';render()">✕ Limpiar</button>` : ''}
+            </div>
+            <div class="table-wrap">
+            <div class="overflow-table">
+            <table>
+                <thead><tr>
+                    <th style="width:30px;text-align:center"><div class="sel-check ${allSelected ? 'checked' : ''}" onclick="toggleSelectAll()" title="Seleccionar todos">✓</div></th>
+                    <th class="th-sort ${expSortCol==='description'?'sort-active':''}" onclick="setExpSort('description')">📝 Descripción<span class="sort-arrow">${expSortCol==='description'?(expSortDir==='asc'?'▲':'▼'):'▲'}</span></th>
+                    <th class="th-sort ${expSortCol==='totalPrice'?'sort-active':''}" onclick="setExpSort('totalPrice')">💲 Total<span class="sort-arrow">${expSortCol==='totalPrice'?(expSortDir==='asc'?'▲':'▼'):'▲'}</span></th>
+                    <th class="th-sort ${expSortCol==='payPrice'?'sort-active':''}" onclick="setExpSort('payPrice')">💸 A Pagar<span class="sort-arrow">${expSortCol==='payPrice'?(expSortDir==='asc'?'▲':'▼'):'▲'}</span></th>
+                    <th class="th-sort ${expSortCol==='category'?'sort-active':''}" onclick="setExpSort('category')">🏷️ Categoría<span class="sort-arrow">${expSortCol==='category'?(expSortDir==='asc'?'▲':'▼'):'▲'}</span></th>
+                    <th class="th-sort ${expSortCol==='creditCard'?'sort-active':''}" onclick="setExpSort('creditCard')">💳 TC / Método<span class="sort-arrow">${expSortCol==='creditCard'?(expSortDir==='asc'?'▲':'▼'):'▲'}</span></th>
+                    <th class="th-sort ${expSortCol==='creationDate'?'sort-active':''}" onclick="setExpSort('creationDate')">📅 Creación<span class="sort-arrow">${expSortCol==='creationDate'?(expSortDir==='asc'?'▲':'▼'):'▲'}</span></th>
+                    <th class="th-sort ${expSortCol==='paymentDate'?'sort-active':''}" onclick="setExpSort('paymentDate')">📅 Pago<span class="sort-arrow">${expSortCol==='paymentDate'?(expSortDir==='asc'?'▲':'▼'):'▲'}</span></th>
+                    <th class="th-sort ${expSortCol==='paid'?'sort-active':''}" onclick="setExpSort('paid')">📌 Pago<span class="sort-arrow">${expSortCol==='paid'?(expSortDir==='asc'?'▲':'▼'):'▲'}</span></th>
+                    <th class="th-sort ${expSortCol==='comment'?'sort-active':''}" onclick="setExpSort('comment')">💬<span class="sort-arrow">${expSortCol==='comment'?(expSortDir==='asc'?'▲':'▼'):'▲'}</span></th>
+                    <th style="text-align:right">⚙️</th>
+                </tr></thead>
+                <tbody>
+                    ${filtered.length > 0 ? filtered.map(e => {
+                        const card = state.creditCards.find(c => c.id === e.creditCard);
+                        const method = card
+                            ? `<span class="badge badge-card" style="background:${card.color}">${esc(card.name)}</span>`
+                            : `<span class="badge" style="background:var(--surface-alt);color:var(--text-secondary)">💵 Efectivo</span>`;
+                        const catCol = getCatColor(e.category);
+                        const isPaid = !!e.paid;
+                        const cardOpts = [
+                            `<option value="efectivo" ${(!e.creditCard || e.creditCard === 'efectivo') ? 'selected' : ''}>💵 Efectivo</option>`,
+                            ...state.creditCards.map(c => `<option value="${c.id}" ${e.creditCard === c.id ? 'selected' : ''}>${esc(c.name)}</option>`)
+                        ].join('');
+                        const isSel = selectedExpenses.has(e.id);
+                        return `<tr class="${isPaid ? 'row-paid' : ''} ${isSel ? 'row-selected' : ''}">
+                            <td style="text-align:center"><div class="sel-check ${isSel ? 'checked' : ''}" onclick="toggleSelectExp('${e.id}')">✓</div></td>
+                            <td><span class="td-editable" onclick="inlineEdit(this,'text','${e.id}','description')" style="font-weight:500">${esc(e.description)}</span></td>
+                            <td><span class="td-editable td-amount" onclick="inlineEdit(this,'money','${e.id}','totalPrice')">${fmt(e.totalPrice)}</span></td>
+                            <td><span class="td-editable td-amount" onclick="inlineEdit(this,'money','${e.id}','payPrice')" style="color:var(--danger-text)">${fmt(e.payAmount)}</span></td>
+                            <td><span class="td-editable" onclick="inlineEditCat(this,'${e.id}')"><span class="badge" style="background:${catCol}">${esc(e.category || '—')}</span></span></td>
+                            <td><span class="td-editable" onclick="inlineEditCard(this,'${e.id}')">${method}</span></td>
+                            <td><span class="td-editable" onclick="inlineEdit(this,'date','${e.id}','creationDate')" style="color:var(--text-muted);font-size:0.75rem">${fmtDate(e.creationDate)}</span></td>
+                            <td><span class="td-editable" onclick="inlineEdit(this,'date','${e.id}','paymentDate')" style="color:var(--text-muted);font-size:0.75rem">${fmtDate(e.paymentDate)}</span></td>
+                            <td style="text-align:center"><div class="paid-toggle ${isPaid ? 'checked' : ''}" onclick="togglePaid('${e.id}')" title="${isPaid ? 'Pagado' : 'Marcar como pagado'}">✓</div></td>
+                            <td style="text-align:center"><span class="td-comment-icon ${e.comment ? 'has-comment' : ''}" onclick="openCommentPopup('expense','${e.id}')" title="${e.comment ? esc(e.comment) : 'Agregar comentario'}">💬</span></td>
+                            <td><div class="td-actions">
+                                <button class="btn btn-icon btn-sm btn-ghost btn-danger" onclick="delExpense('${e.id}')">✕</button>
+                            </div></td>
+                        </tr>`;
+                    }).join('') : `<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.82rem">🔍 Sin resultados para este filtro</td></tr>`}
+                </tbody>
+            </table>
+            </div>
+            <div class="total-row">
+                <span class="total-label">⏳ Pendiente: ${fmt(totalUnpaid)} · ✅ Pagado: ${fmt(totalPaid)}${hasFilters ? ` · 🔍 Filtrado: ${fmt(filteredTotal)}` : ''}${selCount > 0 && selCount < filtered.length ? ` · ✅ Seleccionados (${selCount}): ${fmt(selTotal)}` : ''}</span>
+                <span style="color:var(--danger-text);font-size:1rem">${selCount > 0 && selCount < filtered.length ? fmt(selTotal) : fmt(totalExp)}</span>
+            </div>
+            </div>`;
+            })() : `<div class="table-wrap"><div class="empty-state"><div class="empty-icon">🧾</div><p>Sin gastos en esta pestaña</p></div></div>`}
+        </div>
+
+        <!-- Credit Cards Section -->
+        <div class="section fade-in">
+            <div class="section-header">
+                <div class="section-title">💳 Tarjetas de Crédito</div>
+                <div style="display:flex;gap:6px;align-items:center">
+                    <select class="exp-filter-select ${ccFilterMonth ? 'active' : ''}" onchange="ccFilterMonth=this.value;render()">
+                        <option value="">📅 Todas las fechas</option>
+                        ${ccMonthsSorted.map(mk => {
+                            const lbl = mk === 'sin-fecha' ? 'Sin fecha' : `${MONTHS_ES[parseInt(mk.split('-')[1])-1]} ${mk.split('-')[0]}`;
+                            return `<option value="${mk}" ${ccFilterMonth === mk ? 'selected' : ''}>${lbl}</option>`;
+                        }).join('')}
+                    </select>
+                    ${ccFilterMonth ? `<button class="exp-filter-clear" onclick="ccFilterMonth='';render()">✕</button>` : ''}
+                    <button class="btn btn-sm" onclick="openCardModal()">➕ Agregar Tarjeta</button>
+                </div>
+            </div>
+            <div class="cc-grid">
+                ${state.creditCards.map(card => {
+                    const d = ccByCard[card.id];
+                    const months = Object.keys(d.byMonth).sort();
+                    const monthLabels = months.map(mk => {
+                        if (mk === 'sin-fecha') return { key: mk, label: 'Sin fecha' };
+                        const [yy, mm] = mk.split('-');
+                        return { key: mk, label: `${MONTHS_ES[parseInt(mm)-1]} ${yy}` };
+                    });
+                    return `<div class="cc-card">
+                        <div class="cc-card-header">
+                            <div class="cc-card-name"><span class="cc-dot" style="background:${card.color}"></span>${esc(card.name)}</div>
+                            <div class="cc-card-cut">✂️ Corte día ${card.cutDay}</div>
+                        </div>
+                        <div class="cc-card-total" style="color:${d.total > 0 ? 'var(--text)' : 'var(--text-muted)'}">${fmt(d.total)}</div>
+                        ${d.expenses.length > 0 ? monthLabels
+                            .filter(ml => !ccFilterMonth || ml.key === ccFilterMonth)
+                            .map(ml => {
+                            const grp = d.byMonth[ml.key];
+                            if (!grp) return '';
+                            return `<div class="cc-month-group">
+                                <div class="cc-month-label">
+                                    <span>📅 ${esc(ml.label)}</span>
+                                    <span style="font-weight:600;font-size:0.75rem">${fmt(grp.total)}</span>
+                                </div>
+                                ${grp.items.map(e => `<div class="cc-card-detail">
+                                    <span>${esc(e.description)}</span>
+                                    <span style="font-weight:600">${fmt(e.payAmount)}</span>
+                                </div>`).join('')}
+                            </div>`;
+                        }).join('') : `<div class="cc-card-detail" style="color:var(--text-muted);justify-content:center">✨ Sin cargos</div>`}
+                        <div class="cc-card-actions">
+                            <button onclick="openCardModal('${card.id}')">✏️ Editar</button>
+                            <button class="del" onclick="deleteCard('${card.id}')">🗑️ Eliminar</button>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+            <div class="cc-total-bar">
+                <span style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);font-weight:600">
+                    💳 Total${ccFilterMonth ? ` (${ccFilterMonth === 'sin-fecha' ? 'Sin fecha' : MONTHS_ES[parseInt(ccFilterMonth.split('-')[1])-1] + ' ' + ccFilterMonth.split('-')[0]})` : ' Tarjetas'}
+                </span>
+                <span style="font-weight:700;font-size:1rem">${fmt(ccGrandTotal)}</span>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        ${expenses.length > 0 ? (() => {
+            let cExpenses = expenses;
+            if (chartFilterCards.length > 0) cExpenses = cExpenses.filter(e => {
+                const eid = e.creditCard || 'efectivo';
+                return chartFilterCards.includes(eid);
+            });
+            if (chartFilterCats.length > 0) cExpenses = cExpenses.filter(e => chartFilterCats.includes(e.category || ''));
+            const chartUsedCats = [...new Set(expenses.map(e => e.category).filter(Boolean))];
+            const hasChartFilters = chartFilterCards.length > 0 || chartFilterCats.length > 0;
+
+            const byCat = {};
+            const byCatCount = {};
+            for (const e of cExpenses) { const k = e.category || 'Sin categoría'; byCat[k] = (byCat[k] || 0) + e.payAmount; byCatCount[k] = (byCatCount[k] || 0) + 1; }
+            const catEntries = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+            const catMax = catEntries.length > 0 ? catEntries[0][1] : 1;
+
+            const byCard = {};
+            const byCardCount = {};
+            for (const e of cExpenses) {
+                const card = state.creditCards.find(c => c.id === e.creditCard);
+                const k = card ? card.name : 'Efectivo';
+                byCard[k] = byCard[k] || { total: 0, color: card ? card.color : '#E0E0E0' };
+                byCard[k].total += e.payAmount;
+                byCardCount[k] = (byCardCount[k] || 0) + 1;
+            }
+            const cardEntries = Object.entries(byCard).sort((a, b) => b[1].total - a[1].total);
+            const cardMax = cardEntries.length > 0 ? cardEntries[0][1].total : 1;
+
+            const cTotal = cExpenses.reduce((s, e) => s + e.payAmount, 0);
+
+            const CHART_COLORS = ['#7C9EB8','#B8D4C8','#D4A8C8','#E8C8A0','#A8C8E8','#C8E8A8','#E8A8A8','#A8D8D8','#D8C8F0','#F0D8A8','#C8A8E8','#A8E8C8','#E8D8C8'];
+
+            return `
+        <div class="section fade-in">
+            <div class="section-header">
+                <div class="section-title">📊 Gráficos de Gastos</div>
+                ${hasChartFilters ? `<button class="exp-filter-clear" onclick="chartFilterCards=[];chartFilterCats=[];render()">✕ Limpiar filtros</button>` : ''}
+            </div>
+            <div style="margin-bottom:14px">
+                <div style="font-size:0.68rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em">💳 Tarjetas</div>
+                <div class="chip-filter-wrap">
+                    <div class="chip-filter ${chartFilterCards.includes('efectivo') ? 'active' : ''}" onclick="toggleChartCard('efectivo')">💵 Efectivo</div>
+                    ${state.creditCards.map(c => `<div class="chip-filter ${chartFilterCards.includes(c.id) ? 'active' : ''}" onclick="toggleChartCard('${c.id}')"><span class="chart-legend-dot" style="background:${c.color};display:inline-block;width:8px;height:8px;border-radius:50%"></span> ${esc(c.name)}</div>`).join('')}
+                </div>
+            </div>
+            <div style="margin-bottom:14px">
+                <div style="font-size:0.68rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em">🏷️ Categorías</div>
+                <div class="chip-filter-wrap">
+                    ${chartUsedCats.map((c, i) => `<div class="chip-filter ${chartFilterCats.includes(c) ? 'active' : ''}" onclick="toggleChartCat('${esc(c)}')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${CHART_COLORS[i % CHART_COLORS.length]}"></span> ${esc(c)}</div>`).join('')}
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-box">
+                    <div class="chart-box-title">🏷️ Por Categoría · ${cExpenses.length} gasto${cExpenses.length !== 1 ? 's' : ''}</div>
+                    ${catEntries.length > 0 ? catEntries.map(([ cat, total ], i) => {
+                        const pct = catMax > 0 ? (total / catMax) * 100 : 0;
+                        const color = CHART_COLORS[i % CHART_COLORS.length];
+                        const pctOfTotal = cTotal > 0 ? ((total / cTotal) * 100).toFixed(1) : 0;
+                        const count = byCatCount[cat] || 0;
+                        return `<div class="chart-bar-row">
+                            <div class="chart-tooltip">
+                                <strong>${esc(cat)}</strong><br>
+                                ${fmt(total)} · ${pctOfTotal}%<br>
+                                ${count} gasto${count !== 1 ? 's' : ''}
+                            </div>
+                            <div class="chart-bar-label" title="${esc(cat)}">${esc(cat)}</div>
+                            <div class="chart-bar-track">
+                                <div class="chart-bar-fill" style="width:${Math.max(pct, 2)}%;background:${color}">${pctOfTotal}%</div>
+                            </div>
+                            <div class="chart-bar-value">${fmt(total)}</div>
+                        </div>`;
+                    }).join('') : `<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.82rem">Sin datos</div>`}
+                    ${catEntries.length > 0 ? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-size:0.72rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em">Total</span>
+                        <span style="font-weight:700;font-size:0.9rem">${fmt(cTotal)}</span>
+                    </div>` : ''}
+                </div>
+                <div class="chart-box">
+                    <div class="chart-box-title">💳 Por Tarjeta / Método · ${cExpenses.length} gasto${cExpenses.length !== 1 ? 's' : ''}</div>
+                    ${cardEntries.length > 0 ? cardEntries.map(([ name, data ]) => {
+                        const pct = cardMax > 0 ? (data.total / cardMax) * 100 : 0;
+                        const pctOfTotal = cTotal > 0 ? ((data.total / cTotal) * 100).toFixed(1) : 0;
+                        const count = byCardCount[name] || 0;
+                        return `<div class="chart-bar-row">
+                            <div class="chart-tooltip">
+                                <strong>💳 ${esc(name)}</strong><br>
+                                ${fmt(data.total)} · ${pctOfTotal}%<br>
+                                ${count} gasto${count !== 1 ? 's' : ''}
+                            </div>
+                            <div class="chart-bar-label" title="${esc(name)}">${esc(name)}</div>
+                            <div class="chart-bar-track">
+                                <div class="chart-bar-fill" style="width:${Math.max(pct, 2)}%;background:${data.color}">${pctOfTotal}%</div>
+                            </div>
+                            <div class="chart-bar-value">${fmt(data.total)}</div>
+                        </div>`;
+                    }).join('') : `<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.82rem">Sin datos</div>`}
+                    ${cardEntries.length > 0 ? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-size:0.72rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em">Total</span>
+                        <span style="font-weight:700;font-size:0.9rem">${fmt(cTotal)}</span>
+                    </div>` : ''}
+                </div>
+            </div>
+            ${cExpenses.length > 0 ? (() => {
+                const donutSize = 180, donutStroke = 30, donutRadius = (donutSize - donutStroke) / 2;
+                const donutCirc = 2 * Math.PI * donutRadius;
+                let donutOffset = 0;
+                const donutSegments = catEntries.map(([cat, total], i) => {
+                    const pct = cTotal > 0 ? total / cTotal : 0;
+                    const seg = { cat, total, pct, offset: donutOffset, color: CHART_COLORS[i % CHART_COLORS.length] };
+                    donutOffset += pct;
+                    return seg;
+                });
+                return `<div class="chart-donut-wrap" style="margin-top:20px">
+                    <div style="position:relative;width:${donutSize}px;height:${donutSize}px">
+                        <svg width="${donutSize}" height="${donutSize}" viewBox="0 0 ${donutSize} ${donutSize}" style="transform:rotate(-90deg)">
+                            <circle cx="${donutSize/2}" cy="${donutSize/2}" r="${donutRadius}" fill="none" stroke="var(--surface-alt)" stroke-width="${donutStroke}"/>
+                            ${donutSegments.map(s => `<circle cx="${donutSize/2}" cy="${donutSize/2}" r="${donutRadius}" fill="none"
+                                stroke="${s.color}" stroke-width="${donutStroke}"
+                                stroke-dasharray="${s.pct * donutCirc} ${donutCirc}"
+                                stroke-dashoffset="${-s.offset * donutCirc}"
+                                onmouseenter="showDonutTip('${esc(s.cat)}','${fmt(s.total)}','${(s.pct*100).toFixed(1)}%')"
+                                onmouseleave="hideDonutTip()"
+                                style="transition: stroke-dasharray 0.5s ease, stroke-dashoffset 0.5s ease"/>`).join('')}
+                        </svg>
+                        <div class="donut-center" id="donut-center">
+                            <div class="donut-val">${fmt(cTotal)}</div>
+                            <div class="donut-lbl">Total</div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        ${donutSegments.map(s => `<div class="chart-legend-item" onmouseenter="showDonutTip('${esc(s.cat)}','${fmt(s.total)}','${(s.pct*100).toFixed(1)}%')" onmouseleave="hideDonutTip()">
+                            <div class="chart-legend-dot" style="background:${s.color}"></div>
+                            ${esc(s.cat)} · ${(s.pct*100).toFixed(1)}% · ${fmt(s.total)}
+                        </div>`).join('')}
+                    </div>
+                </div>`;
+            })() : ''}
+        </div>`;
+        })() : ''}
+    `;
+}
+
+/* ══════════ TABS ══════════ */
+function setTab(id) {
+    activeTabId = id; closeDropdown();
+    const tab = state.tabs.find(t => t.id === id);
+    if (tab) navYear = tab.year;
+    render();
+}
+
+function showTabMenu(evt, tabId) {
+    menuTabId = tabId;
+    const dd = document.getElementById('tab-dropdown');
+    const rect = evt.target.getBoundingClientRect();
+    dd.style.top = (rect.bottom + 4) + 'px';
+    dd.style.left = rect.left + 'px';
+    dd.innerHTML = `
+        <button onclick="renameTabModal()">✏️ Renombrar</button>
+        <button onclick="duplicateTab()">📋 Duplicar pestaña</button>
+        ${state.tabs.length > 1 ? `<button class="danger" onclick="deleteTab()">🗑️ Eliminar</button>` : ''}
+    `;
+    dd.classList.add('open');
+}
+
+function closeDropdown() { document.getElementById('tab-dropdown').classList.remove('open'); }
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.tab-menu-btn') && !e.target.closest('#tab-dropdown')) closeDropdown();
+});
+
+function renameTabModal() {
+    closeDropdown();
+    const tab = state.tabs.find(t => t.id === menuTabId);
+    if (!tab) return;
+    openModal(`
+        <div class="modal-header"><h3>✏️ Renombrar pestaña</h3><button class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>📝 Nombre</label><input id="f-tname" type="text" value="${esc(tab.name)}"></div>
+            <div class="form-row">
+                <div class="form-group"><label>📅 Año</label><input id="f-tyear" type="number" value="${tab.year}"></div>
+                <div class="form-group"><label>🗓️ Mes</label>
+                    <select id="f-tmonth">${MONTHS_ES.map((m, i) => `<option value="${i}" ${i === tab.month ? 'selected' : ''}>${m}</option>`).join('')}</select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveRenameTab()">Guardar</button>
+        </div>
+    `);
+}
+
+function saveRenameTab() {
+    const tab = state.tabs.find(t => t.id === menuTabId);
+    if (!tab) return;
+    tab.name = document.getElementById('f-tname').value.trim() || tab.name;
+    tab.year = parseInt(document.getElementById('f-tyear').value) || tab.year;
+    tab.month = parseInt(document.getElementById('f-tmonth').value);
+    if (tab.id === activeTabId) navYear = tab.year;
+    save(); closeModal(); render();
+}
+
+function duplicateTab() {
+    closeDropdown();
+    const src = state.tabs.find(t => t.id === menuTabId);
+    if (!src) return;
+    let nm = src.month + 1, ny = src.year;
+    if (nm > 11) { nm = 0; ny++; }
+    const newId = uid();
+    const newTab = { id: newId, name: `${MONTHS_ES[nm]} ${ny}`, year: ny, month: nm };
+    const srcExpenses = state.expenses.filter(exp => exp.tabId === src.id);
+    for (const exp of srcExpenses) {
+        state.expenses.push({ ...exp, id: uid(), tabId: newId, paid: false });
+    }
+    const srcSavings = state.savings.filter(sv => sv.tabId === src.id);
+    for (const sv of srcSavings) {
+        state.savings.push({ ...sv, id: uid(), tabId: newId });
+    }
+    if (state.savingsBalances[src.id]) {
+        state.savingsBalances[newId] = { ...state.savingsBalances[src.id] };
+    }
+    state.tabs.push(newTab);
+    activeTabId = newId;
+    navYear = ny;
+    save(); render();
+}
+
+function deleteTab() {
+    closeDropdown();
+    if (state.tabs.length <= 1) return;
+    if (!confirm('¿Eliminar esta pestaña y sus datos?')) return;
+    state.expenses = state.expenses.filter(e => e.tabId !== menuTabId);
+    state.savings = state.savings.filter(sv => sv.tabId !== menuTabId);
+    delete state.savingsBalances[menuTabId];
+    state.tabs = state.tabs.filter(t => t.id !== menuTabId);
+    if (activeTabId === menuTabId) activeTabId = state.tabs[0].id;
+    save(); render();
+}
+
+function addTabModal() {
+    const tabsThisYear = state.tabs.filter(t => t.year === navYear).sort((a, b) => a.month - b.month);
+    const lastMonth = tabsThisYear.length > 0 ? tabsThisYear[tabsThisYear.length - 1].month : -1;
+    let nm = lastMonth + 1, ny = navYear;
+    if (nm > 11) { nm = 0; ny++; }
+    openModal(`
+        <div class="modal-header"><h3>➕ Nueva pestaña</h3><button class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>📝 Nombre</label><input id="f-ntname" type="text" value="${MONTHS_ES[nm]} ${ny}"></div>
+            <div class="form-row">
+                <div class="form-group"><label>📅 Año</label><input id="f-ntyear" type="number" value="${ny}"></div>
+                <div class="form-group"><label>🗓️ Mes</label>
+                    <select id="f-ntmonth">${MONTHS_ES.map((m, i) => `<option value="${i}" ${i === nm ? 'selected' : ''}>${m}</option>`).join('')}</select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveNewTab()">Crear</button>
+        </div>
+    `);
+}
+
+function saveNewTab() {
+    const name = document.getElementById('f-ntname').value.trim();
+    const year = parseInt(document.getElementById('f-ntyear').value);
+    const month = parseInt(document.getElementById('f-ntmonth').value);
+    if (!name || isNaN(year)) return;
+    const id = uid();
+    state.tabs.push({ id, name, year, month });
+    activeTabId = id;
+    navYear = year;
+    save(); closeModal(); render();
+}
+
+/* ══════════ SAVINGS BALANCE ══════════ */
+function editSavingsBalance() {
+    const tab = activeTab();
+    if (!tab) return;
+    const tabBal = state.savingsBalances[tab.id] || { balance: 0, date: '' };
+    const currentVal = tabBal.balance || 0;
+    openModal(`
+        <div class="modal-header"><h3>💰 Cuenta de Ahorros</h3><button class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>💲 Saldo actual</label>
+                <input id="f-savbal" type="text" inputmode="decimal" value="${currentVal > 0 ? currentVal : ''}" placeholder="0">
+            </div>
+            ${tabBal.date ? `<p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">📅 Última edición: ${fmtDate(tabBal.date)}</p>` : ''}
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveSavingsBalance()">💾 Guardar</button>
+        </div>
+    `);
+    setupPriceInput('f-savbal');
+    document.getElementById('f-savbal').focus();
+}
+
+function saveSavingsBalance() {
+    const tab = activeTab();
+    if (!tab) return;
+    const val = parseFmtInput(document.getElementById('f-savbal').value);
+    state.savingsBalances[tab.id] = { balance: val, date: new Date().toISOString().split('T')[0] };
+    save(); closeModal(); render();
+}
+
+/* ══════════ SAVINGS ENTRIES ══════════ */
+let accPickerOpen = false;
+
+function openSavingEntryModal(editId) {
+    const sv = editId ? state.savings.find(s => s.id === editId) : null;
+    const title = sv ? '✏️ Editar Ahorro' : '🏦 Nuevo Ahorro';
+    const selectedAcc = sv ? state.savingsAccounts.find(a => a.id === sv.account) : state.savingsAccounts[0];
+    openModal(`
+        <div class="modal-header"><h3>${title}</h3><button class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>📝 Descripción</label>
+                <input id="f-svdesc" type="text" value="${sv ? esc(sv.description) : ''}" placeholder="Ej: Ahorro mensual, Emergencia...">
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>💲 Monto</label>
+                    <input id="f-svamt" type="text" inputmode="decimal" value="${sv ? sv.amount : ''}" placeholder="0">
+                </div>
+                <div class="form-group" style="position:relative"><label>🏧 Cuenta</label>
+                    <div class="cat-picker" id="acc-picker">
+                        <input type="hidden" id="f-svacc" value="${selectedAcc ? selectedAcc.id : ''}">
+                        <div class="cat-picker-trigger" onclick="toggleAccPicker()">
+                            <span id="acc-picker-label" style="display:flex;align-items:center;gap:6px">
+                                ${selectedAcc ? `<span style="width:8px;height:8px;border-radius:3px;background:${selectedAcc.color};flex-shrink:0"></span>${esc(selectedAcc.name)}` : 'Sin cuenta'}
+                            </span>
+                            <span class="arrow">▾</span>
+                        </div>
+                        <div class="cat-picker-dd" id="acc-picker-dd">
+                            <div class="cat-picker-list" id="acc-picker-list"></div>
+                            <div class="cat-picker-footer">
+                                <input id="f-newacc-inline" type="text" placeholder="✨ Nueva cuenta..." onkeydown="if(event.key==='Enter'){event.preventDefault();addAccFromPicker();}">
+                                <button onclick="addAccFromPicker()">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group"><label>📅 Fecha</label>
+                <input id="f-svdate" type="date" value="${sv ? sv.date : new Date().toISOString().split('T')[0]}">
+            </div>
+            <div class="form-group" style="margin-top:14px"><label>💬 Comentario</label>
+                <textarea id="f-svcomment" rows="2" placeholder="Nota o comentario opcional..." style="resize:vertical">${sv && sv.comment ? esc(sv.comment) : ''}</textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveSavingEntry('${editId || ''}')">${sv ? 'Guardar' : 'Agregar'}</button>
+        </div>
+    `);
+    renderAccList();
+    setupPriceInput('f-svamt');
+    document.getElementById('f-svdesc').focus();
+}
+
+function saveSavingEntry(editId) {
+    const desc = document.getElementById('f-svdesc').value.trim();
+    const amount = parseFmtInput(document.getElementById('f-svamt').value);
+    const account = document.getElementById('f-svacc').value;
+    const date = document.getElementById('f-svdate').value;
+    const comment = document.getElementById('f-svcomment').value.trim();
+    if (!desc || isNaN(amount) || amount <= 0 || !date) return;
+
+    if (editId) {
+        const idx = state.savings.findIndex(s => s.id === editId);
+        if (idx !== -1) state.savings[idx] = { ...state.savings[idx], description: desc, amount, account, date, comment };
+    } else {
+        state.savings.push({ id: uid(), tabId: activeTabId, description: desc, amount, account, date, comment });
+    }
+    save(); closeModal(); render();
+}
+
+function delSaving(id) {
+    if (!confirm('¿Eliminar este registro de ahorro?')) return;
+    state.savings = state.savings.filter(s => s.id !== id);
+    selectedSavings.delete(id);
+    save(); render();
+}
+
+function toggleSavDeduct(id) {
+    const sv = state.savings.find(s => s.id === id);
+    if (sv) { sv.deductsFromSavings = !sv.deductsFromSavings; save(); render(); }
+}
+
+function toggleSelectSav(id) {
+    if (selectedSavings.has(id)) selectedSavings.delete(id);
+    else selectedSavings.add(id);
+    render();
+}
+
+function toggleSelectAllSav() {
+    const tab = activeTab();
+    if (!tab) return;
+    const tabSav = state.savings.filter(sv => sv.tabId === tab.id);
+    const allSelected = tabSav.length > 0 && tabSav.every(sv => selectedSavings.has(sv.id));
+    if (allSelected) { tabSav.forEach(sv => selectedSavings.delete(sv.id)); }
+    else { tabSav.forEach(sv => selectedSavings.add(sv.id)); }
+    render();
+}
+
+function duplicateSelectedSavings() {
+    if (selectedSavings.size === 0) return;
+    const currentTab = activeTab();
+    if (!currentTab) return;
+    const otherTabs = state.tabs.filter(t => t.id !== currentTab.id);
+    if (otherTabs.length === 0) { alert('No hay otras pestañas disponibles. Crea una primero.'); return; }
+    openModal(`
+        <div class="modal-header"><h3>📋 Duplicar ${selectedSavings.size} ahorro${selectedSavings.size > 1 ? 's' : ''}</h3><button class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>📂 Selecciona la pestaña destino</label>
+                <select id="f-dup-sav-tab" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.82rem">
+                    ${otherTabs.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('')}
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="confirmDuplicateSavings()">📋 Duplicar</button>
+        </div>
+    `);
+}
+
+function confirmDuplicateSavings() {
+    const targetTabId = document.getElementById('f-dup-sav-tab').value;
+    if (!targetTabId) return;
+    for (const svId of selectedSavings) {
+        const sv = state.savings.find(s => s.id === svId);
+        if (sv) {
+            state.savings.push({ ...sv, id: uid(), tabId: targetTabId });
+        }
+    }
+    const targetTab = state.tabs.find(t => t.id === targetTabId);
+    selectedSavings.clear();
+    activeTabId = targetTabId;
+    if (targetTab) navYear = targetTab.year;
+    save(); closeModal(); render();
+}
+
+function inlineSavEdit(el, type, id, field) {
+    if (el.querySelector('input')) return;
+    const sv = state.savings.find(s => s.id === id);
+    if (!sv) return;
+    const oldVal = sv[field];
+    let input;
+    if (type === 'money') {
+        input = document.createElement('input');
+        input.type = 'text'; input.inputMode = 'decimal';
+        input.className = 'td-inline-input';
+        input.value = oldVal > 0 ? oldVal : '';
+        input.style.width = '100px';
+    } else if (type === 'date') {
+        input = document.createElement('input');
+        input.type = 'date';
+        input.className = 'td-inline-input';
+        input.value = oldVal || '';
+        input.style.width = '130px';
+    } else {
+        input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'td-inline-input';
+        input.value = oldVal || '';
+    }
+    el.textContent = '';
+    el.appendChild(input);
+    input.focus();
+    if (type === 'text') input.select();
+    function commit() {
+        let val;
+        if (type === 'money') { val = parseFmtInput(input.value); if (val <= 0) val = oldVal; }
+        else if (type === 'date') { val = input.value || oldVal; }
+        else { val = input.value.trim() || oldVal; }
+        sv[field] = val;
+        save(); render();
+    }
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+        if (ev.key === 'Escape') { input.removeEventListener('blur', commit); render(); }
+    });
+}
+
+function inlineSavAcc(el, id) {
+    if (el.querySelector('select')) return;
+    const sv = state.savings.find(s => s.id === id);
+    if (!sv) return;
+    const sel = document.createElement('select');
+    sel.className = 'td-inline-select';
+    sel.innerHTML = state.savingsAccounts.map(a =>
+        `<option value="${a.id}" ${sv.account === a.id ? 'selected' : ''}>${a.name}</option>`
+    ).join('');
+    el.textContent = '';
+    el.appendChild(sel);
+    sel.focus();
+    function commit() { sv.account = sel.value; save(); render(); }
+    sel.addEventListener('change', commit);
+    sel.addEventListener('blur', commit);
+}
+
+/* ── Account Picker (inline in Saving modal) ── */
+const ACC_PALETTE = ['#B8D4C8','#C8BDE0','#F2CAAE','#AED0E8','#F0D8B8','#C8E0D0','#F0C8C8','#D8C8F0','#E0D8C0','#C8D8F0'];
+
+function toggleAccPicker() {
+    accPickerOpen = !accPickerOpen;
+    document.getElementById('acc-picker-dd').classList.toggle('open', accPickerOpen);
+    document.querySelector('#acc-picker .cat-picker-trigger').classList.toggle('open', accPickerOpen);
+    if (accPickerOpen) setTimeout(() => document.getElementById('f-newacc-inline')?.focus(), 50);
+}
+function closeAccPicker() {
+    accPickerOpen = false;
+    const dd = document.getElementById('acc-picker-dd');
+    const trigger = document.querySelector('#acc-picker .cat-picker-trigger');
+    if (dd) dd.classList.remove('open');
+    if (trigger) trigger.classList.remove('open');
+}
+
+function renderAccList() {
+    const list = document.getElementById('acc-picker-list');
+    if (!list) return;
+    const current = document.getElementById('f-svacc')?.value || '';
+    list.innerHTML = state.savingsAccounts.map(a => {
+        return `<div class="cat-picker-item acc-picker-item ${current === a.id ? 'selected' : ''}">
+            <div class="cat-label" onclick="selectAcc('${a.id}')">
+                <span class="cat-dot" style="background:${a.color}"></span>
+                <span class="cat-name">${esc(a.name)}</span>
+            </div>
+            <div class="acc-actions">
+                <button class="acc-btn" onclick="event.stopPropagation();editAccInline('${a.id}')" title="Editar">✏️</button>
+                <button class="acc-btn del" onclick="event.stopPropagation();deleteAccInline('${a.id}')" title="Eliminar">✕</button>
+            </div>
+        </div>`;
+    }).join('') || '<div style="padding:12px;text-align:center;font-size:0.78rem;color:var(--text-muted)">🏧 Sin cuentas</div>';
+}
+
+function selectAcc(id) {
+    const acc = state.savingsAccounts.find(a => a.id === id);
+    document.getElementById('f-svacc').value = id;
+    document.getElementById('acc-picker-label').innerHTML = acc
+        ? `<span style="width:8px;height:8px;border-radius:3px;background:${acc.color};flex-shrink:0"></span>${esc(acc.name)}`
+        : '🏧 Sin cuenta';
+    closeAccPicker();
+}
+
+function addAccFromPicker() {
+    const input = document.getElementById('f-newacc-inline');
+    const val = input.value.trim();
+    if (!val) return;
+    if (state.savingsAccounts.some(a => a.name.toLowerCase() === val.toLowerCase())) { input.value = ''; return; }
+    const color = ACC_PALETTE[state.savingsAccounts.length % ACC_PALETTE.length];
+    const newAcc = { id: uid(), name: val, color };
+    state.savingsAccounts.push(newAcc);
+    save();
+    input.value = '';
+    selectAcc(newAcc.id);
+    renderAccList();
+}
+
+function editAccInline(id) {
+    const acc = state.savingsAccounts.find(a => a.id === id);
+    if (!acc) return;
+    const newName = prompt('Nombre de la cuenta:', acc.name);
+    if (newName === null) return;
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    acc.name = trimmed;
+    save();
+    if (document.getElementById('f-svacc')?.value === id) selectAcc(id);
+    renderAccList();
+}
+
+function deleteAccInline(id) {
+    const acc = state.savingsAccounts.find(a => a.id === id);
+    if (!acc) return;
+    const hasSavings = state.savings.some(s => s.account === id);
+    const msg = hasSavings
+        ? `"${acc.name}" tiene registros de ahorro asociados. Si la eliminas, esos registros quedarán sin cuenta. ¿Continuar?`
+        : `¿Eliminar la cuenta "${acc.name}"?`;
+    if (!confirm(msg)) return;
+    state.savingsAccounts = state.savingsAccounts.filter(a => a.id !== id);
+    save();
+    if (document.getElementById('f-svacc')?.value === id) {
+        const first = state.savingsAccounts[0];
+        selectAcc(first ? first.id : '');
+    }
+    renderAccList();
+}
+
+function openManageAccountsModal() {
+    const rows = state.savingsAccounts.map(a => {
+        const total = state.savings.filter(s => s.account === a.id).reduce((sum, s) => sum + Number(s.amount), 0);
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-light)">
+            <span style="width:10px;height:10px;border-radius:4px;background:${a.color};flex-shrink:0"></span>
+            <span style="flex:1;font-size:0.82rem;font-weight:500">${esc(a.name)}</span>
+            <span style="font-size:0.78rem;color:var(--accent-text);font-weight:600;min-width:80px;text-align:right">${fmt(total)}</span>
+            <button class="btn btn-icon btn-sm btn-ghost" onclick="editAccountPrompt('${a.id}')" title="Editar">✏️</button>
+            <button class="btn btn-icon btn-sm btn-ghost btn-danger" onclick="deleteAccount('${a.id}')" title="Eliminar">✕</button>
+        </div>`;
+    }).join('');
+
+    openModal(`
+        <div class="modal-header"><h3>🏧 Cuentas de Ahorro</h3><button class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div style="margin-bottom:16px">${rows || '<p style="color:var(--text-muted);font-size:0.82rem;text-align:center;padding:16px">🏧 Sin cuentas</p>'}</div>
+            <div style="display:flex;gap:6px">
+                <input id="f-newacc" type="text" placeholder="✨ Nueva cuenta..." style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.82rem;outline:none">
+                <input id="f-newacccolor" type="color" value="#C8D8E8" style="width:40px;height:38px;padding:3px;border:1px solid var(--border);border-radius:8px;cursor:pointer">
+                <button class="btn btn-primary btn-sm" onclick="addAccount()">➕ Agregar</button>
+            </div>
+        </div>
+    `);
+}
+
+function addAccount() {
+    const name = document.getElementById('f-newacc').value.trim();
+    const color = document.getElementById('f-newacccolor').value;
+    if (!name) return;
+    if (state.savingsAccounts.some(a => a.name.toLowerCase() === name.toLowerCase())) return;
+    state.savingsAccounts.push({ id: uid(), name, color });
+    save(); openManageAccountsModal();
+}
+
+function editAccountPrompt(id) {
+    const acc = state.savingsAccounts.find(a => a.id === id);
+    if (!acc) return;
+    const newName = prompt('Nombre de la cuenta:', acc.name);
+    if (newName === null) return;
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    acc.name = trimmed;
+    save(); openManageAccountsModal();
+}
+
+function deleteAccount(id) {
+    const acc = state.savingsAccounts.find(a => a.id === id);
+    if (!acc) return;
+    const hasSavings = state.savings.some(s => s.account === id);
+    const msg = hasSavings
+        ? `"${acc.name}" tiene registros de ahorro. Si la eliminas, esos registros quedarán sin cuenta. ¿Continuar?`
+        : `¿Eliminar la cuenta "${acc.name}"?`;
+    if (!confirm(msg)) return;
+    state.savingsAccounts = state.savingsAccounts.filter(a => a.id !== id);
+    save(); openManageAccountsModal();
+}
+
+/* ══════════ CREDIT CARDS ══════════ */
+const CARD_PALETTE = ['#D8C8F0','#F2CAAE','#AED0E8','#F0D8B8','#C8C0E0','#F0C8C8','#C8E0D0','#E0D8C0','#C8D8F0','#F0E0C8','#D0C8E8','#C8F0E0'];
+
+function openCardModal(editId) {
+    const card = editId ? state.creditCards.find(c => c.id === editId) : null;
+    const title = card ? '✏️ Editar Tarjeta' : '💳 Nueva Tarjeta';
+    const colorVal = card ? card.color : CARD_PALETTE[state.creditCards.length % CARD_PALETTE.length];
+    openModal(`
+        <div class="modal-header"><h3>${title}</h3><button class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>📝 Nombre</label>
+                <input id="f-ccname" type="text" value="${card ? esc(card.name) : ''}" placeholder="Ej: Nu, Rappi, Amex...">
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>✂️ Día de Corte</label>
+                    <input id="f-cccut" type="number" min="1" max="31" value="${card ? card.cutDay : ''}" placeholder="1-31">
+                </div>
+                <div class="form-group"><label>🎨 Color</label>
+                    <input id="f-cccolor" type="color" value="${colorVal}" style="height:38px;padding:4px;cursor:pointer">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveCard('${editId || ''}')">${card ? 'Guardar' : 'Agregar'}</button>
+        </div>
+    `);
+    document.getElementById('f-ccname').focus();
+}
+
+function saveCard(editId) {
+    const name = document.getElementById('f-ccname').value.trim();
+    const cutDay = parseInt(document.getElementById('f-cccut').value);
+    const color = document.getElementById('f-cccolor').value;
+    if (!name || isNaN(cutDay) || cutDay < 1 || cutDay > 31) return;
+
+    if (editId) {
+        const card = state.creditCards.find(c => c.id === editId);
+        if (card) { card.name = name; card.cutDay = cutDay; card.color = color; }
+    } else {
+        state.creditCards.push({ id: uid(), name, cutDay, color });
+    }
+    save(); closeModal(); render();
+}
+
+function deleteCard(id) {
+    const card = state.creditCards.find(c => c.id === id);
+    if (!card) return;
+    const hasExpenses = state.expenses.some(e => e.creditCard === id);
+    const msg = hasExpenses
+        ? `"${card.name}" tiene gastos asociados. Si la eliminas, esos gastos quedarán como Efectivo. ¿Continuar?`
+        : `¿Eliminar la tarjeta "${card.name}"?`;
+    if (!confirm(msg)) return;
+    if (hasExpenses) {
+        state.expenses.forEach(e => { if (e.creditCard === id) e.creditCard = 'efectivo'; });
+    }
+    state.creditCards = state.creditCards.filter(c => c.id !== id);
+    save(); render();
+}
+
+/* ══════════ EXPENSES ══════════ */
+function openExpenseModal(editId) {
+    const exp = editId ? state.expenses.find(e => e.id === editId) : null;
+    const title = exp ? '✏️ Editar Gasto' : '🧾 Nuevo Gasto';
+    const cardOpts = state.creditCards.map(c =>
+        `<option value="${c.id}" ${exp?.creditCard === c.id ? 'selected' : ''}>${esc(c.name)} (corte ${c.cutDay})</option>`
+    ).join('');
+    const selectedCat = exp?.category || '';
+
+    openModal(`
+        <div class="modal-header"><h3>${title}</h3><button class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>📝 Descripción</label>
+                <input id="f-desc" type="text" value="${exp ? esc(exp.description) : ''}" placeholder="Netflix, Uber, Mercado...">
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>💲 Precio Total</label>
+                    <input id="f-total" type="text" inputmode="decimal" value="${exp ? exp.totalPrice : ''}" placeholder="0">
+                </div>
+                <div class="form-group"><label>💸 Precio a Pagar</label>
+                    <input id="f-payprice" type="text" inputmode="decimal" value="${exp?.payPrice != null ? exp.payPrice : ''}" placeholder="0">
+                </div>
+            </div>
+            <input type="hidden" id="f-inst" value="${exp ? (exp.installments || 1) : 1}">
+            <div class="form-row">
+                <div class="form-group"><label>🏷️ Categoría</label>
+                    <div class="cat-picker" id="cat-picker">
+                        <input type="hidden" id="f-cat" value="${exp ? esc(exp.category) : ''}">
+                        <div class="cat-picker-trigger" onclick="toggleCatPicker()">
+                            <span id="cat-picker-label">${exp?.category ? esc(exp.category) : '🏷️ Sin categoría'}</span>
+                            <span class="arrow">▾</span>
+                        </div>
+                        <div class="cat-picker-dd" id="cat-picker-dd">
+                            <div class="cat-picker-list" id="cat-picker-list"></div>
+                            <div class="cat-picker-footer">
+                                <input id="f-newcat" type="text" placeholder="✨ Nueva categoría..." onkeydown="if(event.key==='Enter'){event.preventDefault();addCatFromPicker();}">
+                                <button onclick="addCatFromPicker()">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group"><label>💳 TC / Método</label>
+                    <select id="f-card" onchange="autoFillPayDate()">
+                        <option value="efectivo" ${!exp || exp.creditCard === 'efectivo' ? 'selected' : ''}>💵 Efectivo / Débito</option>
+                        ${cardOpts}
+                    </select>
+                </div>
+            </div>
+            <div class="form-row" style="margin-top:14px">
+                <div class="form-group"><label>📅 Fecha de Creación</label>
+                    <input id="f-cdate" type="date" value="${exp ? exp.creationDate : defaultDate()}" onchange="autoFillPayDate()">
+                </div>
+                <div class="form-group"><label>📅 Fecha de Pago</label>
+                    <input id="f-pdate" type="date" value="${exp ? exp.paymentDate : defaultDate()}">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top:14px"><label>💬 Comentario</label>
+                <textarea id="f-comment" rows="2" placeholder="Nota o comentario opcional..." style="resize:vertical">${exp && exp.comment ? esc(exp.comment) : ''}</textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveExpense('${editId || ''}')">${exp ? 'Guardar' : 'Agregar'}</button>
+        </div>
+    `);
+    if (!exp) { autoFillPayDate(); }
+    renderCatList();
+    setupPriceInput('f-total');
+    setupPriceInput('f-payprice');
+    document.getElementById('f-desc').focus();
+}
+
+function autoFillPayDate() {
+    const cdate = document.getElementById('f-cdate')?.value;
+    const card = document.getElementById('f-card')?.value;
+    const pdateInput = document.getElementById('f-pdate');
+    if (cdate && pdateInput) pdateInput.value = autoPayDate(cdate, card);
+}
+
+/* ── Category Picker ── */
+let catPickerOpen = false;
+
+function toggleCatPicker() {
+    catPickerOpen = !catPickerOpen;
+    document.getElementById('cat-picker-dd').classList.toggle('open', catPickerOpen);
+    document.querySelector('.cat-picker-trigger').classList.toggle('open', catPickerOpen);
+    if (catPickerOpen) {
+        setTimeout(() => document.getElementById('f-newcat')?.focus(), 50);
+    }
+}
+
+function closeCatPicker() {
+    catPickerOpen = false;
+    const dd = document.getElementById('cat-picker-dd');
+    const trigger = document.querySelector('.cat-picker-trigger');
+    if (dd) dd.classList.remove('open');
+    if (trigger) trigger.classList.remove('open');
+}
+
+function renderCatList() {
+    const list = document.getElementById('cat-picker-list');
+    if (!list) return;
+    const current = document.getElementById('f-cat')?.value || '';
+    list.innerHTML = `
+        <div class="cat-picker-item ${!current ? 'selected' : ''}" onclick="selectCat('')">
+            <div class="cat-label"><span class="cat-dot" style="background:#E8E8E8"></span><span class="cat-name">🏷️ Sin categoría</span></div>
+        </div>
+        ${state.categories.map((c, i) => {
+            const col = CAT_COLORS[i % CAT_COLORS.length];
+            const safe = esc(c).replace(/'/g, "\\'");
+            return `<div class="cat-picker-item ${current === c ? 'selected' : ''}">
+                <div class="cat-label" onclick="selectCat('${safe}')">
+                    <span class="cat-dot" style="background:${col}"></span>
+                    <span class="cat-name">${esc(c)}</span>
+                </div>
+                <div class="cat-actions">
+                    <button class="cat-btn" onclick="event.stopPropagation();editCat('${safe}')" title="Editar">✏️</button>
+                    <button class="cat-btn del" onclick="event.stopPropagation();deleteCat('${safe}')" title="Eliminar">✕</button>
+                </div>
+            </div>`;
+        }).join('')}
+    `;
+}
+
+function selectCat(val) {
+    document.getElementById('f-cat').value = val;
+    document.getElementById('cat-picker-label').textContent = val || '🏷️ Sin categoría';
+    closeCatPicker();
+}
+
+function editCat(name) {
+    const newName = prompt('Renombrar categoría:', name);
+    if (newName === null) return;
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === name) return;
+    if (state.categories.includes(trimmed)) { alert('Ya existe una categoría con ese nombre.'); return; }
+    const idx = state.categories.indexOf(name);
+    if (idx !== -1) state.categories[idx] = trimmed;
+    state.expenses.forEach(e => { if (e.category === name) e.category = trimmed; });
+    save();
+    const current = document.getElementById('f-cat')?.value;
+    if (current === name) selectCat(trimmed);
+    renderCatList();
+}
+
+function deleteCat(name) {
+    if (!confirm(`¿Eliminar la categoría "${name}"?`)) return;
+    state.categories = state.categories.filter(c => c !== name);
+    save();
+    const current = document.getElementById('f-cat')?.value;
+    if (current === name) selectCat('');
+    renderCatList();
+}
+
+function addCatFromPicker() {
+    const input = document.getElementById('f-newcat');
+    const val = input.value.trim();
+    if (!val || state.categories.includes(val)) { input.value = ''; return; }
+    state.categories.push(val);
+    save();
+    selectCat(val);
+    input.value = '';
+    renderCatList();
+}
+
+document.addEventListener('click', (e) => {
+    if (catPickerOpen && !e.target.closest('#cat-picker')) closeCatPicker();
+    if (accPickerOpen && !e.target.closest('#acc-picker')) closeAccPicker();
+});
+
+function calcPayPrice() {
+    const total = parseFloat(document.getElementById('f-total')?.value);
+    const inst = parseInt(document.getElementById('f-inst')?.value) || 1;
+    const ppField = document.getElementById('f-payprice');
+    if (ppField && !isNaN(total) && total > 0) {
+        ppField.value = (total / inst).toFixed(2);
+    }
+}
+
+function saveExpense(editId) {
+    const desc = document.getElementById('f-desc').value.trim();
+    const total = parseFmtInput(document.getElementById('f-total').value);
+    const installments = parseInt(document.getElementById('f-inst').value) || 1;
+    const payPrice = parseFmtInput(document.getElementById('f-payprice').value);
+    const finalPay = payPrice > 0 ? payPrice : total;
+    const finalTotal = total > 0 ? total : finalPay;
+    const category = document.getElementById('f-cat').value;
+    const card = document.getElementById('f-card').value;
+    const cdate = document.getElementById('f-cdate').value;
+    const pdate = document.getElementById('f-pdate').value;
+    if (!desc || finalPay <= 0 || !cdate || !pdate) { alert('Completa la descripción, al menos un precio y las fechas.'); return; }
+
+    const comment = document.getElementById('f-comment').value.trim();
+    const data = { description: desc, totalPrice: finalTotal, payPrice: finalPay, installments, category, creditCard: card, creationDate: cdate, paymentDate: pdate, comment };
+    if (editId) {
+        const idx = state.expenses.findIndex(e => e.id === editId);
+        if (idx !== -1) state.expenses[idx] = { ...state.expenses[idx], ...data };
+    } else {
+        state.expenses.push({ id: uid(), tabId: activeTabId, ...data });
+    }
+    save(); closeModal(); render();
+}
+
+function togglePaid(id) {
+    const exp = state.expenses.find(e => e.id === id);
+    if (exp) { exp.paid = !exp.paid; save(); render(); }
+}
+
+function inlineEdit(el, type, id, field) {
+    if (el.querySelector('input')) return;
+    const exp = state.expenses.find(e => e.id === id);
+    if (!exp) return;
+    const oldVal = exp[field];
+    let input;
+    if (type === 'money') {
+        input = document.createElement('input');
+        input.type = 'text'; input.inputMode = 'decimal';
+        input.className = 'td-inline-input';
+        input.value = oldVal > 0 ? oldVal : '';
+        input.style.width = '90px';
+    } else if (type === 'date') {
+        input = document.createElement('input');
+        input.type = 'date';
+        input.className = 'td-inline-input';
+        input.value = oldVal || '';
+        input.style.width = '130px';
+    } else {
+        input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'td-inline-input';
+        input.value = oldVal || '';
+    }
+    el.textContent = '';
+    el.appendChild(input);
+    input.focus();
+    if (type === 'text') input.select();
+    function commitEdit() {
+        let val;
+        if (type === 'money') { val = parseFmtInput(input.value); if (val <= 0) val = oldVal; }
+        else if (type === 'date') { val = input.value || oldVal; }
+        else { val = input.value.trim() || oldVal; }
+        exp[field] = val;
+        if (field === 'payPrice') exp.payPrice = val;
+        save(); render();
+    }
+    input.addEventListener('blur', commitEdit);
+    input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+        if (ev.key === 'Escape') { input.removeEventListener('blur', commitEdit); render(); }
+    });
+}
+
+function inlineEditCat(el, id) {
+    if (el.querySelector('select')) return;
+    const exp = state.expenses.find(e => e.id === id);
+    if (!exp) return;
+    const sel = document.createElement('select');
+    sel.className = 'td-inline-select';
+    sel.innerHTML = `<option value="">— Sin categoría</option>` +
+        state.categories.map(c => `<option value="${c}" ${exp.category === c ? 'selected' : ''}>${c}</option>`).join('');
+    el.textContent = '';
+    el.appendChild(sel);
+    sel.focus();
+    function commit() { exp.category = sel.value; save(); render(); }
+    sel.addEventListener('change', commit);
+    sel.addEventListener('blur', commit);
+}
+
+function inlineEditCard(el, id) {
+    if (el.querySelector('select')) return;
+    const exp = state.expenses.find(e => e.id === id);
+    if (!exp) return;
+    const sel = document.createElement('select');
+    sel.className = 'td-inline-select';
+    sel.innerHTML = `<option value="efectivo" ${(!exp.creditCard || exp.creditCard === 'efectivo') ? 'selected' : ''}>💵 Efectivo</option>` +
+        state.creditCards.map(c => `<option value="${c.id}" ${exp.creditCard === c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+    el.textContent = '';
+    el.appendChild(sel);
+    sel.focus();
+    function commit() { exp.creditCard = sel.value; save(); render(); }
+    sel.addEventListener('change', commit);
+    sel.addEventListener('blur', commit);
+}
+
+function delExpense(id) {
+    if (!confirm('¿Eliminar este gasto?')) return;
+    state.expenses = state.expenses.filter(e => e.id !== id);
+    selectedExpenses.delete(id);
+    save(); render();
+}
+
+function openCommentPopup(type, id) {
+    let item, label;
+    if (type === 'expense') {
+        item = state.expenses.find(e => e.id === id);
+        label = item ? item.description : 'Gasto';
+    } else {
+        item = state.savings.find(s => s.id === id);
+        label = item ? item.description : 'Ahorro';
+    }
+    if (!item) return;
+    openModal(`
+        <div class="modal-header"><h3>💬 Comentario</h3><button class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 14px;background:var(--surface-alt);border-radius:10px">
+                <span style="font-size:1.1rem">${type === 'expense' ? '🧾' : '🏦'}</span>
+                <div>
+                    <div style="font-size:0.82rem;font-weight:600;color:var(--text)">${esc(label)}</div>
+                    <div style="font-size:0.68rem;color:var(--text-muted)">${type === 'expense' ? 'Gasto' : 'Ahorro'}</div>
+                </div>
+            </div>
+            <div class="form-group" style="margin:0">
+                <textarea id="f-popup-comment" rows="5" placeholder="Escribe un comentario o nota..." style="resize:vertical">${item.comment ? esc(item.comment) : ''}</textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveCommentPopup('${type}','${id}')">💾 Guardar</button>
+        </div>
+    `);
+    document.getElementById('f-popup-comment').focus();
+}
+
+function saveCommentPopup(type, id) {
+    const comment = document.getElementById('f-popup-comment').value.trim();
+    if (type === 'expense') {
+        const item = state.expenses.find(e => e.id === id);
+        if (item) item.comment = comment;
+    } else {
+        const item = state.savings.find(s => s.id === id);
+        if (item) item.comment = comment;
+    }
+    save(); closeModal(); render();
+}
+
+function toggleChartCard(id) {
+    const idx = chartFilterCards.indexOf(id);
+    if (idx >= 0) chartFilterCards.splice(idx, 1);
+    else chartFilterCards.push(id);
+    render();
+}
+
+function toggleChartCat(cat) {
+    const idx = chartFilterCats.indexOf(cat);
+    if (idx >= 0) chartFilterCats.splice(idx, 1);
+    else chartFilterCats.push(cat);
+    render();
+}
+
+function showDonutTip(cat, amount, pct) {
+    const el = document.getElementById('donut-center');
+    if (el) { el.innerHTML = `<div class="donut-val">${amount}</div><div class="donut-lbl">${cat} · ${pct}</div>`; }
+}
+
+function hideDonutTip() {
+    const el = document.getElementById('donut-center');
+    if (!el) return;
+    const tab = activeTab();
+    if (!tab) return;
+    const expenses = getExpensesForTab(tab.id);
+    let cExpenses = expenses;
+    if (chartFilterCards.length > 0) cExpenses = cExpenses.filter(e => chartFilterCards.includes(e.creditCard || 'efectivo'));
+    if (chartFilterCats.length > 0) cExpenses = cExpenses.filter(e => chartFilterCats.includes(e.category || ''));
+    const cTotal = cExpenses.reduce((s, e) => s + e.payAmount, 0);
+    el.innerHTML = `<div class="donut-val">${fmt(cTotal)}</div><div class="donut-lbl">Total</div>`;
+}
+
+function setExpSort(col) {
+    if (expSortCol === col) { expSortDir = expSortDir === 'asc' ? 'desc' : 'asc'; }
+    else { expSortCol = col; expSortDir = 'asc'; }
+    render();
+}
+
+function applySortExp(arr) {
+    if (!expSortCol) return arr;
+    const sorted = [...arr];
+    sorted.sort((a, b) => {
+        let va, vb;
+        switch (expSortCol) {
+            case 'description': va = (a.description || '').toLowerCase(); vb = (b.description || '').toLowerCase(); break;
+            case 'totalPrice': va = a.totalPrice || 0; vb = b.totalPrice || 0; break;
+            case 'payPrice': va = a.payAmount || 0; vb = b.payAmount || 0; break;
+            case 'category': va = (a.category || '').toLowerCase(); vb = (b.category || '').toLowerCase(); break;
+            case 'creditCard':
+                const ca = state.creditCards.find(c => c.id === a.creditCard);
+                const cb = state.creditCards.find(c => c.id === b.creditCard);
+                va = ca ? ca.name.toLowerCase() : 'efectivo'; vb = cb ? cb.name.toLowerCase() : 'efectivo'; break;
+            case 'creationDate': va = a.creationDate || ''; vb = b.creationDate || ''; break;
+            case 'paymentDate': va = a.paymentDate || ''; vb = b.paymentDate || ''; break;
+            case 'paid': va = a.paid ? 1 : 0; vb = b.paid ? 1 : 0; break;
+            case 'comment': va = (a.comment || '').toLowerCase(); vb = (b.comment || '').toLowerCase(); break;
+            default: return 0;
+        }
+        if (va < vb) return expSortDir === 'asc' ? -1 : 1;
+        if (va > vb) return expSortDir === 'asc' ? 1 : -1;
+        return 0;
+    });
+    return sorted;
+}
+
+function toggleSelectExp(id) {
+    if (selectedExpenses.has(id)) selectedExpenses.delete(id);
+    else selectedExpenses.add(id);
+    render();
+}
+
+function toggleSelectAll() {
+    const tab = activeTab();
+    if (!tab) return;
+    const exps = getExpensesForTab(tab.id);
+    let filtered = exps;
+    if (expFilterCard) filtered = filtered.filter(e => expFilterCard === 'efectivo' ? (!e.creditCard || e.creditCard === 'efectivo') : e.creditCard === expFilterCard);
+    if (expFilterCat) filtered = filtered.filter(e => e.category === expFilterCat);
+    if (expFilterPaid === 'paid') filtered = filtered.filter(e => e.paid);
+    if (expFilterPaid === 'unpaid') filtered = filtered.filter(e => !e.paid);
+    const allSelected = filtered.length > 0 && filtered.every(e => selectedExpenses.has(e.id));
+    if (allSelected) { filtered.forEach(e => selectedExpenses.delete(e.id)); }
+    else { filtered.forEach(e => selectedExpenses.add(e.id)); }
+    render();
+}
+
+function duplicateSelectedToNewTab() {
+    if (selectedExpenses.size === 0) return;
+    const currentTab = activeTab();
+    if (!currentTab) return;
+    const otherTabs = state.tabs.filter(t => t.id !== currentTab.id);
+    if (otherTabs.length === 0) { alert('No hay otras pestañas disponibles. Crea una primero.'); return; }
+    openModal(`
+        <div class="modal-header"><h3>📋 Duplicar ${selectedExpenses.size} gasto${selectedExpenses.size > 1 ? 's' : ''}</h3><button class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>📂 Selecciona la pestaña destino</label>
+                <select id="f-dup-tab" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.82rem">
+                    ${otherTabs.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('')}
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="confirmDuplicateSelected()">📋 Duplicar</button>
+        </div>
+    `);
+}
+
+function confirmDuplicateSelected() {
+    const targetTabId = document.getElementById('f-dup-tab').value;
+    if (!targetTabId) return;
+    for (const expId of selectedExpenses) {
+        const exp = state.expenses.find(e => e.id === expId);
+        if (exp) {
+            state.expenses.push({ ...exp, id: uid(), tabId: targetTabId, paid: false });
+        }
+    }
+    const targetTab = state.tabs.find(t => t.id === targetTabId);
+    selectedExpenses.clear();
+    activeTabId = targetTabId;
+    if (targetTab) navYear = targetTab.year;
+    save(); closeModal(); render();
+}
+
+/* ══════════ MODAL ══════════ */
+function openModal(html) {
+    document.getElementById('modal').innerHTML = html;
+    document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+document.getElementById('modal-overlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+/* ══════════ EXPORT / IMPORT ══════════ */
+function exportData() {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `finanzas_${new Date().toISOString().split('T')[0]}.json`;
+    a.click(); URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (data.expenses) {
+                state = migrateState(data);
+                activeTabId = state.tabs[0]?.id || '';
+                save(); render();
+            }
+        } catch (_) { alert('Error al importar.'); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+/* ══════════ INIT ══════════ */
+if (!activeTabId && state.tabs.length) activeTabId = state.tabs[0].id;
+initAuth();
+</script>
+</body>
+</html>
