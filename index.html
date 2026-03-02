@@ -872,10 +872,10 @@ async function handleAuth() {
             if (!res.error && res.data?.user?.identities?.length === 0) {
                 res.error = { message: 'Este correo ya está registrado' };
             }
-            if (!res.error) {
-                okEl.textContent = 'Cuenta creada. Revisa tu correo para confirmar o inicia sesión.';
+            if (!res.error && !res.data?.session) {
+                okEl.textContent = 'Cuenta creada. Revisa tu correo para confirmar y luego inicia sesión.';
                 okEl.style.display = 'block';
-                document.getElementById('auth-btn').textContent = authMode === 'login' ? 'Iniciar Sesión' : 'Registrarse';
+                document.getElementById('auth-btn').textContent = 'Registrarse';
                 return;
             }
         }
