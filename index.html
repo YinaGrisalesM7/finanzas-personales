@@ -506,6 +506,21 @@
         .exp-filter-select.active { background-color: var(--text); color: white; border-color: var(--text);
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='white'/%3E%3C/svg%3E");
         }
+        .date-filter-label {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 10px; border: 1px solid var(--border); border-radius: 20px;
+            font-family: inherit; font-size: 0.72rem; font-weight: 500; color: var(--text-secondary);
+            background: white; cursor: pointer; transition: all var(--transition); white-space: nowrap;
+        }
+        .date-filter-label.active { background-color: var(--text); color: white; border-color: var(--text); }
+        .date-filter-label.active input { color: white; }
+        .date-filter-label input {
+            border: none; background: transparent; font-family: inherit; font-size: 0.72rem;
+            font-weight: 500; color: var(--text-secondary); cursor: pointer; outline: none;
+            width: 110px; padding: 0; margin: 0;
+        }
+        .date-filter-label input::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; }
+        .date-filter-label.active input::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; }
         .exp-filter-clear {
             padding: 4px 10px; border: none; background: none; cursor: pointer;
             font-family: inherit; font-size: 0.68rem; color: var(--text-muted); border-radius: 12px;
@@ -1414,8 +1429,8 @@ function render() {
                     <option value="unpaid" ${expFilterPaid === 'unpaid' ? 'selected' : ''}>⏳ Pendientes</option>
                     <option value="paid" ${expFilterPaid === 'paid' ? 'selected' : ''}>✅ Pagados</option>
                 </select>
-                <input type="date" class="exp-filter-select ${expFilterDateFrom ? 'active' : ''}" value="${expFilterDateFrom}" onchange="expFilterDateFrom=this.value;render()" title="📅 Desde" style="width:auto;padding-right:6px">
-                <input type="date" class="exp-filter-select ${expFilterDateTo ? 'active' : ''}" value="${expFilterDateTo}" onchange="expFilterDateTo=this.value;render()" title="📅 Hasta" style="width:auto;padding-right:6px">
+                <label class="date-filter-label ${expFilterDateFrom ? 'active' : ''}">📅 Desde <input type="date" value="${expFilterDateFrom}" onchange="expFilterDateFrom=this.value;render()"></label>
+                <label class="date-filter-label ${expFilterDateTo ? 'active' : ''}">📅 Hasta <input type="date" value="${expFilterDateTo}" onchange="expFilterDateTo=this.value;render()"></label>
                 ${hasFilters ? `<button class="exp-filter-clear" onclick="expFilterCard=[];expFilterCat='';expFilterPaid='';expSearch='';expFilterDateFrom='';expFilterDateTo='';render()">✕ Limpiar</button>` : ''}
             </div>
             <div class="table-wrap">
