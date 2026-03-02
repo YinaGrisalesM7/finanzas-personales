@@ -816,7 +816,8 @@
 /* ══════════ SUPABASE CONFIG ══════════ */
 const SUPABASE_URL = 'https://kvajbjhmxeuewyvercml.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2YWpiamhteGV1ZXd5dmVyY21sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MTU5MDMsImV4cCI6MjA4Nzk5MTkwM30.h8kBuF8H3O5V8IjI4-Xu3MmIqbUoCw1lJNC7KDKiBok';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const DATA_ROW_ID = 'finanzas-main';
 let syncStatus = 'ok';
@@ -832,7 +833,7 @@ function updateSyncUI(status) {
 
 async function supabaseLoad() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await sb
             .from('user_data')
             .select('data')
             .eq('id', DATA_ROW_ID)
@@ -851,7 +852,7 @@ async function supabaseSave() {
     _saveTimer = setTimeout(async () => {
         updateSyncUI('saving');
         try {
-            const { error } = await supabase
+            const { error } = await sb
                 .from('user_data')
                 .upsert({ id: DATA_ROW_ID, data: state, updated_at: new Date().toISOString() }, { onConflict: 'id' });
             if (error) throw error;
