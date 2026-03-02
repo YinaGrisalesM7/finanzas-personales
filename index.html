@@ -310,7 +310,7 @@
             font-weight: 500; color: var(--text-secondary); transition: all var(--transition);
             display: flex; align-items: center; justify-content: space-between; gap: 4px;
         }
-        .tab-item:hover { border-color: #DDD; box-shadow: var(--shadow-xs); color: var(--text); }
+        @media (hover: hover) { .tab-item:hover { border-color: #DDD; box-shadow: var(--shadow-xs); color: var(--text); } }
         .tab-item.active {
             background: var(--text); color: white; border-color: var(--text);
             box-shadow: var(--shadow-sm);
@@ -322,10 +322,11 @@
             align-items: center; justify-content: center; opacity: 0; transition: opacity var(--transition);
             flex-shrink: 0;
         }
-        .tab-item:hover .tab-menu-btn { opacity: 0.5; }
+        @media (hover: hover) { .tab-item:hover .tab-menu-btn { opacity: 0.5; } }
         .tab-item.active .tab-menu-btn { opacity: 0.7; }
-        .tab-menu-btn:hover { opacity: 1 !important; background: rgba(255,255,255,0.15); }
-        .tab-item:not(.active) .tab-menu-btn:hover { background: var(--surface-hover); }
+        @media (hover: hover) { .tab-menu-btn:hover { opacity: 1 !important; background: rgba(255,255,255,0.15); } }
+        @media (hover: hover) { .tab-item:not(.active) .tab-menu-btn:hover { background: var(--surface-hover); } }
+        @media (hover: none) { .tab-menu-btn { opacity: 0.5; } .tab-item.active .tab-menu-btn { opacity: 0.7; } }
         .tab-empty {
             grid-column: 1 / -1; text-align: center; padding: 16px; color: var(--text-muted);
             font-size: 0.78rem;
@@ -1257,9 +1258,9 @@ function render() {
                     }).sort((a, b) => a.month - b.month);
                     if (filtered.length === 0) return `<div class="tab-empty">📭 Sin pestañas para ${navYear}${navSearch ? ` con "${esc(navSearch)}"` : ''}</div>`;
                     return filtered.map(t => `
-                        <div class="tab-item ${t.id === activeTabId ? 'active' : ''}" onclick="setTab('${t.id}')">
+                        <div class="tab-item ${t.id === activeTabId ? 'active' : ''}" ontouchend="event.preventDefault();setTab('${t.id}')" onclick="setTab('${t.id}')">
                             <span class="tab-name">${esc(t.name)}</span>
-                            <button class="tab-menu-btn" onclick="event.stopPropagation();showTabMenu(event,'${t.id}')">⋯</button>
+                            <button class="tab-menu-btn" ontouchend="event.stopPropagation();event.preventDefault();showTabMenu(event,'${t.id}')" onclick="event.stopPropagation();showTabMenu(event,'${t.id}')">⋯</button>
                         </div>
                     `).join('');
                 })()}
