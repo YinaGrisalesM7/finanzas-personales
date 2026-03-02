@@ -1331,7 +1331,9 @@ function render() {
                     const sq = savSearch.toLowerCase();
                     filteredSav = filteredSav.filter(sv => (sv.description || '').toLowerCase().includes(sq) || (sv.comment || '').toLowerCase().includes(sq));
                 }
-                const savSelCount = filteredSav.filter(sv => selectedSavings.has(sv.id)).length;
+                const savSelItems = filteredSav.filter(sv => selectedSavings.has(sv.id));
+                const savSelCount = savSelItems.length;
+                const savSelTotal = savSelItems.reduce((s, sv) => s + Number(sv.amount), 0);
                 const savAllSelected = filteredSav.length > 0 && savSelCount === filteredSav.length;
                 return `
             ${savSelCount > 0 ? `<div class="sel-bar">
@@ -1368,8 +1370,8 @@ function render() {
             </table>
             </div>
             <div class="total-row" style="flex-wrap:wrap;gap:8px">
-                <span class="total-label">🏦 Total Ahorros</span>
-                <span style="color:var(--accent-text);font-size:1rem">${fmt(totalSavings)}</span>
+                <span class="total-label">🏦 Total Ahorros${savSelCount > 0 && savSelCount < filteredSav.length ? ` · ✅ Seleccionados (${savSelCount}): ${fmt(savSelTotal)}` : ''}</span>
+                <span style="color:var(--accent-text);font-size:1rem">${savSelCount > 0 && savSelCount < filteredSav.length ? fmt(savSelTotal) : fmt(totalSavings)}</span>
             </div>
             <div class="total-row" style="flex-wrap:wrap;gap:8px;border-top:none;padding-top:0;opacity:0.85">
                 <span class="total-label" style="font-size:0.78rem">📌 Cuenta de Ahorros</span>
