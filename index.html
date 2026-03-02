@@ -864,26 +864,24 @@ async function supabaseSave() {
 }
 
 async function initApp() {
-    document.getElementById('sync-status-bar').style.display = 'flex';
-    updateSyncUI('saving');
-
-    const cloudData = await supabaseLoad();
-    const localRaw = localStorage.getItem(STORAGE_KEY);
-    const localData = localRaw ? JSON.parse(localRaw) : null;
-
-    if (cloudData && cloudData.tabs && cloudData.tabs.length > 0) {
-        state = migrateState(cloudData);
-    } else if (localData && localData.tabs && localData.tabs.length > 0) {
-        state = migrateState(localData);
-        await supabaseSave();
-    } else {
-        state = loadState();
-    }
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    activeTabId = state.tabs[0]?.id || '';
-    updateSyncUI('ok');
     render();
+    try {
+        document.getElementById('sync-status-bar').style.display = 'flex';
+        updateSyncUI('saving');
+        const cloudData = await supabaseLoad();
+        if (cloudData && cloudData.tabs && cloudData.tabs.length > 0) {
+            state = migrateState(cloudData);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            activeTabId = state.tabs[0]?.id || '';
+            render();
+        } else {
+            supabaseSave();
+        }
+        updateSyncUI('ok');
+    } catch (e) {
+        console.warn('Supabase init failed, using local data', e);
+        updateSyncUI('error');
+    }
 }
 
 /* ══════════ APP CONSTANTS ══════════ */
