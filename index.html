@@ -927,7 +927,7 @@ let activeTabId = state.tabs[0]?.id || '';
 let menuTabId = null;
 let navYear = new Date().getFullYear();
 let navSearch = '';
-let expFilterCard = '';
+let expFilterCard = [];
 let expFilterCat = '';
 let expFilterPaid = '';
 let selectedExpenses = new Set();
@@ -1375,13 +1375,13 @@ function render() {
             ${expenses.length > 0 ? (() => {
                 const usedCards = [...new Set(expenses.map(e => e.creditCard))];
                 const usedCats = [...new Set(expenses.map(e => e.category).filter(Boolean))];
-                const hasFilters = expFilterCard || expFilterCat || expFilterPaid || expSearch || expFilterDateFrom || expFilterDateTo;
+                const hasFilters = expFilterCard.length || expFilterCat || expFilterPaid || expSearch || expFilterDateFrom || expFilterDateTo;
                 let filtered = expenses;
                 if (expSearch) {
                     const q = expSearch.toLowerCase();
                     filtered = filtered.filter(e => (e.description || '').toLowerCase().includes(q) || (e.category || '').toLowerCase().includes(q) || (e.comment || '').toLowerCase().includes(q));
                 }
-                if (expFilterCard) filtered = filtered.filter(e => expFilterCard === 'efectivo' ? (!e.creditCard || e.creditCard === 'efectivo') : e.creditCard === expFilterCard);
+                if (expFilterCard.length) filtered = filtered.filter(e => expFilterCard.includes('efectivo') ? (expFilterCard.includes(e.creditCard) || (!e.creditCard || e.creditCard === 'efectivo')) : expFilterCard.includes(e.creditCard));
                 if (expFilterCat) filtered = filtered.filter(e => e.category === expFilterCat);
                 if (expFilterPaid === 'paid') filtered = filtered.filter(e => e.paid);
                 if (expFilterPaid === 'unpaid') filtered = filtered.filter(e => !e.paid);
@@ -1401,11 +1401,10 @@ function render() {
             </div>` : ''}
             <div class="exp-filters">
                 <input class="search-input" id="exp-search" type="text" placeholder="🔍 Buscar gasto..." value="${esc(expSearch)}" oninput="expSearch=this.value;searchRender('exp-search')">
-                <select class="exp-filter-select ${expFilterCard ? 'active' : ''}" onchange="expFilterCard=this.value;render()">
-                    <option value="">💳 Todas las TC</option>
-                    <option value="efectivo" ${expFilterCard === 'efectivo' ? 'selected' : ''}>💵 Efectivo</option>
-                    ${state.creditCards.map(c => `<option value="${c.id}" ${expFilterCard === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
-                </select>
+                <div class="chip-filter-wrap">
+                    <div class="chip-filter ${expFilterCard.includes('efectivo') ? 'active' : ''}" onclick="toggleExpCardFilter('efectivo')">💵 Efectivo</div>
+                    ${state.creditCards.map(c => `<div class="chip-filter ${expFilterCard.includes(c.id) ? 'active' : ''}" onclick="toggleExpCardFilter('${c.id}')" style="${expFilterCard.includes(c.id) ? 'background:'+c.color : ''}">${esc(c.name)}</div>`).join('')}
+                </div>
                 <select class="exp-filter-select ${expFilterCat ? 'active' : ''}" onchange="expFilterCat=this.value;render()">
                     <option value="">🏷️ Todas las categorías</option>
                     ${usedCats.map(c => `<option value="${esc(c)}" ${expFilterCat === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
@@ -1417,7 +1416,7 @@ function render() {
                 </select>
                 <input type="date" class="exp-filter-select ${expFilterDateFrom ? 'active' : ''}" value="${expFilterDateFrom}" onchange="expFilterDateFrom=this.value;render()" title="📅 Desde" style="width:auto;padding-right:6px">
                 <input type="date" class="exp-filter-select ${expFilterDateTo ? 'active' : ''}" value="${expFilterDateTo}" onchange="expFilterDateTo=this.value;render()" title="📅 Hasta" style="width:auto;padding-right:6px">
-                ${hasFilters ? `<button class="exp-filter-clear" onclick="expFilterCard='';expFilterCat='';expFilterPaid='';expSearch='';expFilterDateFrom='';expFilterDateTo='';render()">✕ Limpiar</button>` : ''}
+                ${hasFilters ? `<button class="exp-filter-clear" onclick="expFilterCard=[];expFilterCat='';expFilterPaid='';expSearch='';expFilterDateFrom='';expFilterDateTo='';render()">✕ Limpiar</button>` : ''}
             </div>
             <div class="table-wrap">
             <div class="overflow-table">
@@ -2622,6 +2621,13 @@ function hideDonutTip() {
     el.innerHTML = `<div class="donut-val">${fmt(cTotal)}</div><div class="donut-lbl">Total</div>`;
 }
 
+function toggleExpCardFilter(id) {
+    const idx = expFilterCard.indexOf(id);
+    if (idx >= 0) expFilterCard.splice(idx, 1);
+    else expFilterCard.push(id);
+    render();
+}
+
 function setExpSort(col) {
     if (expSortCol === col) { expSortDir = expSortDir === 'asc' ? 'desc' : 'asc'; }
     else { expSortCol = col; expSortDir = 'asc'; }
@@ -2666,7 +2672,7 @@ function toggleSelectAll() {
     if (!tab) return;
     const exps = getExpensesForTab(tab.id);
     let filtered = exps;
-    if (expFilterCard) filtered = filtered.filter(e => expFilterCard === 'efectivo' ? (!e.creditCard || e.creditCard === 'efectivo') : e.creditCard === expFilterCard);
+    if (expFilterCard.length) filtered = filtered.filter(e => expFilterCard.includes('efectivo') ? (expFilterCard.includes(e.creditCard) || (!e.creditCard || e.creditCard === 'efectivo')) : expFilterCard.includes(e.creditCard));
     if (expFilterCat) filtered = filtered.filter(e => e.category === expFilterCat);
     if (expFilterPaid === 'paid') filtered = filtered.filter(e => e.paid);
     if (expFilterPaid === 'unpaid') filtered = filtered.filter(e => !e.paid);
