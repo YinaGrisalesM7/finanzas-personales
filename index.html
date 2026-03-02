@@ -797,23 +797,7 @@
         .fade-in { animation: fadeIn 0.25s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-        .auth-overlay { position:fixed; inset:0; background:var(--bg); z-index:9999; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; }
-        .auth-card { background:var(--surface); border-radius:20px; padding:48px 40px; box-shadow:0 8px 40px rgba(0,0,0,0.08); width:380px; max-width:90vw; text-align:center; }
-        .auth-card h1 { font-size:1.5rem; font-weight:700; color:var(--text); margin-bottom:6px; }
-        .auth-card p { font-size:0.85rem; color:var(--text-secondary); margin-bottom:28px; }
-        .auth-card input { width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:12px; font-family:inherit; font-size:0.9rem; outline:none; transition:border-color var(--transition); margin-bottom:12px; background:var(--surface-alt); color:var(--text); }
-        .auth-card input:focus { border-color:var(--accent-dark); }
-        .auth-card .auth-btn { width:100%; padding:13px; border:none; border-radius:12px; background:var(--accent); color:var(--accent-text); font-family:inherit; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all var(--transition); margin-top:4px; }
-        .auth-card .auth-btn:hover { background:var(--accent-dark); color:white; }
-        .auth-card .auth-toggle { font-size:0.8rem; color:var(--text-secondary); margin-top:18px; }
-        .auth-card .auth-toggle a { color:var(--accent-text); cursor:pointer; font-weight:600; text-decoration:none; }
-        .auth-card .auth-toggle a:hover { text-decoration:underline; }
-        .auth-card .auth-error { font-size:0.78rem; color:var(--danger-text); background:rgba(232,175,168,0.15); padding:8px 12px; border-radius:8px; margin-bottom:12px; display:none; }
-        .auth-card .auth-success { font-size:0.78rem; color:var(--accent-text); background:rgba(184,212,200,0.2); padding:8px 12px; border-radius:8px; margin-bottom:12px; display:none; }
-        .auth-card .auth-logo { font-size:2.5rem; margin-bottom:12px; }
         .auth-user-bar { position:fixed; top:12px; right:16px; z-index:100; display:flex; align-items:center; gap:8px; font-size:0.72rem; color:var(--text-secondary); }
-        .auth-user-bar button { padding:4px 12px; border:1px solid var(--border); border-radius:16px; background:white; font-family:inherit; font-size:0.7rem; font-weight:500; color:var(--text-secondary); cursor:pointer; transition:all var(--transition); }
-        .auth-user-bar button:hover { border-color:var(--danger); color:var(--danger-text); }
         .sync-indicator { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:4px; vertical-align:middle; }
         .sync-ok { background:#8BC49E; }
         .sync-saving { background:#F0D4A8; }
@@ -821,23 +805,8 @@
     </style>
 </head>
 <body>
-<div class="auth-overlay" id="auth-overlay">
-    <div class="auth-card">
-        <div class="auth-logo">💰</div>
-        <h1 id="auth-title">Iniciar Sesión</h1>
-        <p id="auth-subtitle">Accede a tu dashboard de finanzas</p>
-        <div class="auth-error" id="auth-error"></div>
-        <div class="auth-success" id="auth-success"></div>
-        <input type="email" id="auth-email" placeholder="Correo electrónico" autocomplete="email">
-        <input type="password" id="auth-password" placeholder="Contraseña" autocomplete="current-password">
-        <button class="auth-btn" id="auth-btn" onclick="handleAuth()">Iniciar Sesión</button>
-        <div class="auth-toggle" id="auth-toggle">¿No tienes cuenta? <a onclick="toggleAuthMode()">Registrarse</a></div>
-    </div>
-</div>
-<div class="auth-user-bar" id="user-bar" style="display:none">
+<div class="auth-user-bar" id="sync-status-bar" style="display:none">
     <span id="sync-status"></span>
-    <span id="user-email"></span>
-    <button onclick="handleLogout()">Salir</button>
 </div>
 <div class="app" id="app"></div>
 <div class="modal-overlay" id="modal-overlay"><div class="modal" id="modal"></div></div>
@@ -849,72 +818,8 @@ const SUPABASE_URL = 'https://kvajbjhmxeuewyvercml.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2YWpiamhteGV1ZXd5dmVyY21sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MTU5MDMsImV4cCI6MjA4Nzk5MTkwM30.h8kBuF8H3O5V8IjI4-Xu3MmIqbUoCw1lJNC7KDKiBok';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let currentUser = null;
-let authMode = 'login';
+const DATA_ROW_ID = 'finanzas-main';
 let syncStatus = 'ok';
-
-async function handleAuth() {
-    const email = document.getElementById('auth-email').value.trim();
-    const pass = document.getElementById('auth-password').value;
-    const errEl = document.getElementById('auth-error');
-    const okEl = document.getElementById('auth-success');
-    errEl.style.display = 'none';
-    okEl.style.display = 'none';
-    if (!email || !pass) { errEl.textContent = 'Completa todos los campos'; errEl.style.display = 'block'; return; }
-    if (pass.length < 6) { errEl.textContent = 'La contraseña debe tener al menos 6 caracteres'; errEl.style.display = 'block'; return; }
-    try {
-        document.getElementById('auth-btn').textContent = 'Cargando...';
-        let res;
-        if (authMode === 'login') {
-            res = await supabase.auth.signInWithPassword({ email, password: pass });
-        } else {
-            res = await supabase.auth.signUp({ email, password: pass });
-            if (!res.error && res.data?.user?.identities?.length === 0) {
-                res.error = { message: 'Este correo ya está registrado' };
-            }
-            if (!res.error && !res.data?.session) {
-                okEl.textContent = 'Cuenta creada. Revisa tu correo para confirmar y luego inicia sesión.';
-                okEl.style.display = 'block';
-                document.getElementById('auth-btn').textContent = 'Registrarse';
-                return;
-            }
-        }
-        if (res.error) {
-            const msg = res.error.message.includes('Invalid login') ? 'Correo o contraseña incorrectos' : res.error.message;
-            errEl.textContent = msg;
-            errEl.style.display = 'block';
-            document.getElementById('auth-btn').textContent = authMode === 'login' ? 'Iniciar Sesión' : 'Registrarse';
-            return;
-        }
-        currentUser = res.data.user;
-        await onAuthReady();
-    } catch (e) {
-        errEl.textContent = 'Error de conexión';
-        errEl.style.display = 'block';
-        document.getElementById('auth-btn').textContent = authMode === 'login' ? 'Iniciar Sesión' : 'Registrarse';
-    }
-}
-
-function toggleAuthMode() {
-    authMode = authMode === 'login' ? 'signup' : 'login';
-    document.getElementById('auth-title').textContent = authMode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta';
-    document.getElementById('auth-subtitle').textContent = authMode === 'login' ? 'Accede a tu dashboard de finanzas' : 'Crea tu cuenta para empezar';
-    document.getElementById('auth-btn').textContent = authMode === 'login' ? 'Iniciar Sesión' : 'Registrarse';
-    document.getElementById('auth-toggle').innerHTML = authMode === 'login'
-        ? '¿No tienes cuenta? <a onclick="toggleAuthMode()">Registrarse</a>'
-        : '¿Ya tienes cuenta? <a onclick="toggleAuthMode()">Iniciar Sesión</a>';
-    document.getElementById('auth-error').style.display = 'none';
-    document.getElementById('auth-success').style.display = 'none';
-}
-
-async function handleLogout() {
-    await supabase.auth.signOut();
-    currentUser = null;
-    document.getElementById('auth-overlay').style.display = 'flex';
-    document.getElementById('user-bar').style.display = 'none';
-    document.getElementById('auth-email').value = '';
-    document.getElementById('auth-password').value = '';
-}
 
 function updateSyncUI(status) {
     syncStatus = status;
@@ -926,12 +831,11 @@ function updateSyncUI(status) {
 }
 
 async function supabaseLoad() {
-    if (!currentUser) return null;
     try {
         const { data, error } = await supabase
             .from('user_data')
             .select('data')
-            .eq('user_id', currentUser.id)
+            .eq('id', DATA_ROW_ID)
             .maybeSingle();
         if (error) throw error;
         return data ? data.data : null;
@@ -943,14 +847,13 @@ async function supabaseLoad() {
 
 let _saveTimer = null;
 async function supabaseSave() {
-    if (!currentUser) return;
     clearTimeout(_saveTimer);
     _saveTimer = setTimeout(async () => {
         updateSyncUI('saving');
         try {
             const { error } = await supabase
                 .from('user_data')
-                .upsert({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+                .upsert({ id: DATA_ROW_ID, data: state, updated_at: new Date().toISOString() }, { onConflict: 'id' });
             if (error) throw error;
             updateSyncUI('ok');
         } catch (e) {
@@ -960,10 +863,8 @@ async function supabaseSave() {
     }, 800);
 }
 
-async function onAuthReady() {
-    document.getElementById('auth-overlay').style.display = 'none';
-    document.getElementById('user-bar').style.display = 'flex';
-    document.getElementById('user-email').textContent = currentUser.email;
+async function initApp() {
+    document.getElementById('sync-status-bar').style.display = 'flex';
     updateSyncUI('saving');
 
     const cloudData = await supabaseLoad();
@@ -983,15 +884,6 @@ async function onAuthReady() {
     activeTabId = state.tabs[0]?.id || '';
     updateSyncUI('ok');
     render();
-}
-
-async function initAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-        currentUser = session.user;
-        await onAuthReady();
-    }
-    document.getElementById('auth-password').addEventListener('keydown', e => { if (e.key === 'Enter') handleAuth(); });
 }
 
 /* ══════════ APP CONSTANTS ══════════ */
@@ -2843,7 +2735,7 @@ function importData(event) {
 
 /* ══════════ INIT ══════════ */
 if (!activeTabId && state.tabs.length) activeTabId = state.tabs[0].id;
-initAuth();
+initApp();
 </script>
 </body>
 </html>
