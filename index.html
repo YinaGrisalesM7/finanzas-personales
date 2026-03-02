@@ -2023,13 +2023,25 @@ function inlineSavAcc(el, id) {
     sel.className = 'td-inline-select';
     sel.innerHTML = state.savingsAccounts.map(a =>
         `<option value="${a.id}" ${sv.account === a.id ? 'selected' : ''}>${a.name}</option>`
-    ).join('');
+    ).join('') + '<option value="__new__">+ Nueva cuenta</option>';
     el.textContent = '';
     el.appendChild(sel);
     sel.focus();
-    function commit() { sv.account = sel.value; save(); render(); }
+    function commit() {
+        if (sel.value === '__new__') {
+            const name = prompt('Nombre de la nueva cuenta:');
+            if (!name || !name.trim()) { render(); return; }
+            const newId = uid();
+            const color = ACC_PALETTE[state.savingsAccounts.length % ACC_PALETTE.length];
+            state.savingsAccounts.push({ id: newId, name: name.trim(), color });
+            sv.account = newId;
+        } else {
+            sv.account = sel.value;
+        }
+        save(); render();
+    }
     sel.addEventListener('change', commit);
-    sel.addEventListener('blur', commit);
+    sel.addEventListener('blur', () => { if (sel.value !== '__new__') commit(); });
 }
 
 /* ── Account Picker (inline in Saving modal) ── */
