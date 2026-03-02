@@ -936,6 +936,8 @@ let ccFilterMonth = '';
 let expSortCol = '';
 let expSortDir = 'asc';
 let expSearch = '';
+let expFilterDateFrom = '';
+let expFilterDateTo = '';
 let savSearch = '';
 let chartView = 'category';
 let chartFilterCards = [];
@@ -1373,7 +1375,7 @@ function render() {
             ${expenses.length > 0 ? (() => {
                 const usedCards = [...new Set(expenses.map(e => e.creditCard))];
                 const usedCats = [...new Set(expenses.map(e => e.category).filter(Boolean))];
-                const hasFilters = expFilterCard || expFilterCat || expFilterPaid || expSearch;
+                const hasFilters = expFilterCard || expFilterCat || expFilterPaid || expSearch || expFilterDateFrom || expFilterDateTo;
                 let filtered = expenses;
                 if (expSearch) {
                     const q = expSearch.toLowerCase();
@@ -1383,6 +1385,8 @@ function render() {
                 if (expFilterCat) filtered = filtered.filter(e => e.category === expFilterCat);
                 if (expFilterPaid === 'paid') filtered = filtered.filter(e => e.paid);
                 if (expFilterPaid === 'unpaid') filtered = filtered.filter(e => !e.paid);
+                if (expFilterDateFrom) filtered = filtered.filter(e => (e.paymentDate || e.creationDate || '') >= expFilterDateFrom);
+                if (expFilterDateTo) filtered = filtered.filter(e => (e.paymentDate || e.creationDate || '') <= expFilterDateTo);
                 filtered = applySortExp(filtered);
                 const filteredTotal = filtered.reduce((s, e) => s + e.payAmount, 0);
                 const selItems = filtered.filter(e => selectedExpenses.has(e.id));
@@ -1411,7 +1415,9 @@ function render() {
                     <option value="unpaid" ${expFilterPaid === 'unpaid' ? 'selected' : ''}>⏳ Pendientes</option>
                     <option value="paid" ${expFilterPaid === 'paid' ? 'selected' : ''}>✅ Pagados</option>
                 </select>
-                ${hasFilters ? `<button class="exp-filter-clear" onclick="expFilterCard='';expFilterCat='';expFilterPaid='';expSearch='';render()">✕ Limpiar</button>` : ''}
+                <input type="date" class="exp-filter-select ${expFilterDateFrom ? 'active' : ''}" value="${expFilterDateFrom}" onchange="expFilterDateFrom=this.value;render()" title="📅 Desde" style="width:auto;padding-right:6px">
+                <input type="date" class="exp-filter-select ${expFilterDateTo ? 'active' : ''}" value="${expFilterDateTo}" onchange="expFilterDateTo=this.value;render()" title="📅 Hasta" style="width:auto;padding-right:6px">
+                ${hasFilters ? `<button class="exp-filter-clear" onclick="expFilterCard='';expFilterCat='';expFilterPaid='';expSearch='';expFilterDateFrom='';expFilterDateTo='';render()">✕ Limpiar</button>` : ''}
             </div>
             <div class="table-wrap">
             <div class="overflow-table">
