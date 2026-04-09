@@ -920,12 +920,34 @@ async function gistSave() {
     }, 800);
 }
 
+function copyToClipboard(text, btnId) {
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById(btnId);
+        if (btn) { const orig = btn.textContent; btn.textContent = '✓ Copiado'; setTimeout(() => btn.textContent = orig, 1500); }
+    });
+}
+
+function toggleTokenVisibility() {
+    const input = document.getElementById('gist-token-input');
+    const btn = document.getElementById('toggle-token-btn');
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈 Ocultar'; }
+    else { input.type = 'password'; btn.textContent = '👁 Mostrar'; }
+}
+
 function showGistConfigModal() {
     const config = getGistConfig() || {};
+    const isConnected = config.token && config.gistId;
     const overlay = document.getElementById('modal-overlay');
     const modal = document.getElementById('modal');
     modal.innerHTML = `
         <h2 style="margin-bottom:16px">🔄 Configurar Sincronización</h2>
+        ${isConnected ? `
+        <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+            <div style="font-size:0.8rem;font-weight:600;color:var(--accent-text);margin-bottom:8px">✓ Conectado como @${config.user || 'GitHub'}</div>
+            <p style="font-size:0.78rem;color:var(--text-secondary);line-height:1.5;margin-bottom:4px">
+                Para usar en otro navegador, copia el <b>Token</b> y el <b>ID del Gist</b> y pégalos allá.
+            </p>
+        </div>` : `
         <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;line-height:1.5">
             Para sincronizar tus datos entre navegadores necesitas un <b>Personal Access Token</b> de GitHub con permiso de <b>gist</b>.
         </p>
@@ -933,20 +955,29 @@ function showGistConfigModal() {
             <li>Ve a <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener noreferrer" style="color:var(--accent-text)">github.com/settings/tokens</a></li>
             <li>Crea un token (Fine-grained) con permiso <b>Gists: Read and Write</b></li>
             <li>Pega el token aquí abajo</li>
-        </ol>
+        </ol>`}
         <div class="form-group" style="margin-bottom:12px">
-            <label style="font-size:0.8rem;font-weight:600">Token de GitHub</label>
-            <input type="password" id="gist-token-input" class="input" placeholder="github_pat_..." value="${config.token || ''}" style="font-family:monospace;font-size:0.85rem">
+            <label style="font-size:0.8rem;font-weight:600;display:flex;align-items:center;justify-content:space-between">
+                Token de GitHub
+                <span style="display:flex;gap:6px">
+                    <button id="toggle-token-btn" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px" onclick="toggleTokenVisibility()">👁 Mostrar</button>
+                    ${isConnected ? '<button id="copy-token-btn" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px" onclick="copyToClipboard(document.getElementById(\'gist-token-input\').value,\'copy-token-btn\')">📋 Copiar</button>' : ''}
+                </span>
+            </label>
+            <input type="password" id="gist-token-input" class="input" placeholder="github_pat_..." value="${config.token || ''}" style="font-family:monospace;font-size:0.85rem" ${isConnected ? 'readonly' : ''}>
         </div>
         <div class="form-group" style="margin-bottom:12px">
-            <label style="font-size:0.8rem;font-weight:600">ID del Gist <span style="font-weight:400;color:var(--text-secondary)">(vacío = crear nuevo)</span></label>
-            <input type="text" id="gist-id-input" class="input" placeholder="Dejar vacío para crear automáticamente" value="${config.gistId || ''}" style="font-family:monospace;font-size:0.85rem">
+            <label style="font-size:0.8rem;font-weight:600;display:flex;align-items:center;justify-content:space-between">
+                ID del Gist ${!isConnected ? '<span style="font-weight:400;color:var(--text-secondary)">(vacío = crear nuevo)</span>' : ''}
+                ${isConnected ? '<button id="copy-gist-btn" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px" onclick="copyToClipboard(document.getElementById(\'gist-id-input\').value,\'copy-gist-btn\')">📋 Copiar</button>' : ''}
+            </label>
+            <input type="text" id="gist-id-input" class="input" placeholder="Dejar vacío para crear automáticamente" value="${config.gistId || ''}" style="font-family:monospace;font-size:0.85rem" ${isConnected ? 'readonly' : ''}>
         </div>
         <div id="gist-config-msg" style="font-size:0.8rem;margin-bottom:12px;display:none"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-            <button class="btn btn-sm" onclick="closeModal()">Cancelar</button>
-            ${config.token ? '<button class="btn btn-sm" style="background:var(--danger);color:var(--danger-text)" onclick="disconnectGist()">Desconectar</button>' : ''}
-            <button class="btn btn-sm" style="background:var(--accent);color:var(--accent-text);font-weight:600" onclick="connectGist()">Conectar</button>
+            <button class="btn btn-sm" onclick="closeModal()">Cerrar</button>
+            ${isConnected ? '<button class="btn btn-sm" style="background:var(--danger);color:var(--danger-text)" onclick="disconnectGist()">Desconectar</button>' : ''}
+            ${!isConnected ? '<button class="btn btn-sm" style="background:var(--accent);color:var(--accent-text);font-weight:600" onclick="connectGist()">Conectar</button>' : ''}
         </div>
     `;
     overlay.classList.add('open');
