@@ -1593,7 +1593,9 @@ function render() {
                 <div class="section-title">🧾 Gastos<span class="section-count">${expenses.length}</span></div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
                     <button type="button" class="btn btn-primary btn-sm" onclick="openExpenseModal()">➕ Nuevo Gasto</button>
-                    ${expenses.length > 0 ? `<button type="button" class="btn btn-sm ${expSelToolbar ? 'btn-danger' : 'btn-ghost'}" style="${expSelToolbar ? 'border:1px solid rgba(220,80,60,0.35);border-radius:10px' : ''}" onclick="deleteSelectedExpensesFromToolbar()">🗑️ Eliminar seleccionados${expSelToolbar > 0 ? ` (${expSelToolbar})` : ''}</button>` : ''}
+                    ${expenses.length > 0 ? `<button type="button" class="btn btn-sm btn-ghost" onclick="markSelectedPaidFromToolbar()">✅ Marcar pagado${expSelToolbar > 0 ? ` (${expSelToolbar})` : ''}</button>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="markSelectedUnpaidFromToolbar()">⏳ Marcar pendiente${expSelToolbar > 0 ? ` (${expSelToolbar})` : ''}</button>
+                    <button type="button" class="btn btn-sm ${expSelToolbar ? 'btn-danger' : 'btn-ghost'}" style="${expSelToolbar ? 'border:1px solid rgba(220,80,60,0.35);border-radius:10px' : ''}" onclick="deleteSelectedExpensesFromToolbar()">🗑️ Eliminar seleccionados${expSelToolbar > 0 ? ` (${expSelToolbar})` : ''}</button>` : ''}
                 </div>
             </div>
             ${expenses.length > 0 ? (() => {
@@ -1609,9 +1611,11 @@ function render() {
                 return `
             ${selCount > 0 ? `<div class="sel-bar">
                 <span>✅ ${selCount} seleccionado${selCount > 1 ? 's' : ''}</span>
-                <button onclick="duplicateSelectedToNewTab()">📋 Duplicar en otra pestaña</button>
+                <button type="button" onclick="duplicateSelectedToNewTab()">📋 Duplicar en otra pestaña</button>
+                <button type="button" onclick="setSelectedExpensesPaid(true)">✅ Marcar pagado</button>
+                <button type="button" onclick="setSelectedExpensesPaid(false)">⏳ Marcar pendiente</button>
                 <button type="button" class="sel-bar-danger" onclick="deleteSelectedExpenses()">🗑️ Eliminar</button>
-                <button onclick="selectedExpenses.clear();render()">✕ Deseleccionar</button>
+                <button type="button" onclick="selectedExpenses.clear();render()">✕ Deseleccionar</button>
             </div>` : ''}
             <div class="exp-filters">
                 <input class="search-input" id="exp-search" type="text" placeholder="🔍 Buscar gasto..." value="${esc(expSearch)}" oninput="expSearch=this.value;searchRender('exp-search')">
@@ -2810,6 +2814,45 @@ function deleteSelectedExpensesFromToolbar() {
         return;
     }
     deleteSelectedExpenses();
+}
+
+/** Marca como pagado o pendiente los gastos seleccionados que coinciden con la lista filtrada del tab actual. */
+function setSelectedExpensesPaid(paid) {
+    const tab = activeTab();
+    if (!tab) return;
+    const tabExps = getExpensesForTab(tab.id);
+    const filtered = filterExpensesList(tabExps);
+    const ids = new Set(
+        filtered.filter(e => selectedExpenses.has(String(e.id))).map(e => String(e.id))
+    );
+    if (ids.size === 0) return;
+    for (const exp of state.expenses) {
+        if (ids.has(String(exp.id))) exp.paid = !!paid;
+    }
+    save();
+    render();
+}
+
+function markSelectedPaidFromToolbar() {
+    const tab = activeTab();
+    if (!tab) return;
+    const n = filterExpensesList(getExpensesForTab(tab.id)).filter(e => selectedExpenses.has(String(e.id))).length;
+    if (n === 0) {
+        alert('Selecciona gastos con la casilla ✓ o usa “seleccionar todos” en la primera columna del encabezado de la tabla.');
+        return;
+    }
+    setSelectedExpensesPaid(true);
+}
+
+function markSelectedUnpaidFromToolbar() {
+    const tab = activeTab();
+    if (!tab) return;
+    const n = filterExpensesList(getExpensesForTab(tab.id)).filter(e => selectedExpenses.has(String(e.id))).length;
+    if (n === 0) {
+        alert('Selecciona gastos con la casilla ✓ o usa “seleccionar todos” en la primera columna del encabezado de la tabla.');
+        return;
+    }
+    setSelectedExpensesPaid(false);
 }
 
 function openCommentPopup(type, id) {
