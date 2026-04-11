@@ -535,6 +535,17 @@
         /* ── Table ── */
         .table-wrap { border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
         .overflow-table { overflow-x: auto; }
+        /* Primera columna (✓) fija al hacer scroll horizontal en tablas anchas (móvil) */
+        .exp-table-sticky th:first-child,
+        .exp-table-sticky td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background: var(--surface);
+            box-shadow: 3px 0 8px rgba(0,0,0,0.06);
+        }
+        .exp-table-sticky thead th:first-child { z-index: 3; }
+        .exp-table-sticky tr.row-selected td:first-child { background: rgba(44,44,44,0.06); }
         table { width: 100%; border-collapse: collapse; }
         thead th {
             font-size: 0.67rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
@@ -1320,6 +1331,7 @@ function render() {
     const tab = activeTab();
     if (!tab) return;
     const expenses = getExpensesForTab(tab.id);
+    const expSelToolbar = expenses.length ? filterExpensesList(expenses).filter(e => selectedExpenses.has(e.id)).length : 0;
     const ccExpenses = expenses.filter(e => e.creditCard && e.creditCard !== 'efectivo');
     const totalExp = expenses.reduce((s, e) => s + e.payAmount, 0);
     const totalCC = ccExpenses.reduce((s, e) => s + e.payAmount, 0);
@@ -1576,26 +1588,18 @@ function render() {
 
         <!-- Expenses Section -->
         <div class="section fade-in">
-            <div class="section-header">
+            <div class="section-header" style="flex-wrap:wrap;gap:10px">
                 <div class="section-title">🧾 Gastos<span class="section-count">${expenses.length}</span></div>
-                <button class="btn btn-primary btn-sm" onclick="openExpenseModal()">➕ Nuevo Gasto</button>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openExpenseModal()">➕ Nuevo Gasto</button>
+                    ${expenses.length > 0 ? `<button type="button" class="btn btn-sm ${expSelToolbar ? 'btn-danger' : 'btn-ghost'}" style="${expSelToolbar ? 'border:1px solid rgba(220,80,60,0.35);border-radius:10px' : ''}" onclick="deleteSelectedExpensesFromToolbar()">🗑️ Eliminar seleccionados${expSelToolbar > 0 ? ` (${expSelToolbar})` : ''}</button>` : ''}
+                </div>
             </div>
             ${expenses.length > 0 ? (() => {
                 const usedCards = [...new Set(expenses.map(e => e.creditCard))];
                 const usedCats = [...new Set(expenses.map(e => e.category).filter(Boolean))];
                 const hasFilters = expFilterCard.length || expFilterCat || expFilterPaid || expSearch || expFilterDateFrom || expFilterDateTo;
-                let filtered = expenses;
-                if (expSearch) {
-                    const q = expSearch.toLowerCase();
-                    filtered = filtered.filter(e => (e.description || '').toLowerCase().includes(q) || (e.category || '').toLowerCase().includes(q) || (e.comment || '').toLowerCase().includes(q));
-                }
-                if (expFilterCard.length) filtered = filtered.filter(e => expFilterCard.includes('efectivo') ? (expFilterCard.includes(e.creditCard) || (!e.creditCard || e.creditCard === 'efectivo')) : expFilterCard.includes(e.creditCard));
-                if (expFilterCat) filtered = filtered.filter(e => e.category === expFilterCat);
-                if (expFilterPaid === 'paid') filtered = filtered.filter(e => e.paid);
-                if (expFilterPaid === 'unpaid') filtered = filtered.filter(e => !e.paid);
-                if (expFilterDateFrom) filtered = filtered.filter(e => (e.paymentDate || e.creationDate || '') >= expFilterDateFrom);
-                if (expFilterDateTo) filtered = filtered.filter(e => (e.paymentDate || e.creationDate || '') <= expFilterDateTo);
-                filtered = applySortExp(filtered);
+                const filtered = filterExpensesList(expenses);
                 const filteredTotal = filtered.reduce((s, e) => s + e.payAmount, 0);
                 const selItems = filtered.filter(e => selectedExpenses.has(e.id));
                 const selCount = selItems.length;
@@ -1629,7 +1633,7 @@ function render() {
             </div>
             <div class="table-wrap">
             <div class="overflow-table">
-            <table>
+            <table class="exp-table-sticky">
                 <thead><tr>
                     <th style="width:30px;text-align:center"><div class="sel-check ${allSelected ? 'checked' : ''}" onclick="toggleSelectAll()" title="Seleccionar todos">✓</div></th>
                     <th class="th-sort ${expSortCol==='description'?'sort-active':''}" onclick="setExpSort('description')">📝 Descripción<span class="sort-arrow">${expSortCol==='description'?(expSortDir==='asc'?'▲':'▼'):'▲'}</span></th>
@@ -2772,6 +2776,17 @@ function deleteSelectedExpenses() {
     save(); render();
 }
 
+function deleteSelectedExpensesFromToolbar() {
+    const tab = activeTab();
+    if (!tab) return;
+    const n = filterExpensesList(getExpensesForTab(tab.id)).filter(e => selectedExpenses.has(e.id)).length;
+    if (n === 0) {
+        alert('Selecciona uno o más gastos con la casilla ✓ en la primera columna de la tabla. En pantallas pequeñas, desplaza la tabla hacia la derecha si no ves esa columna.');
+        return;
+    }
+    deleteSelectedExpenses();
+}
+
 function openCommentPopup(type, id) {
     let item, label;
     if (type === 'expense') {
@@ -2888,6 +2903,22 @@ function applySortExp(arr) {
     return sorted;
 }
 
+/** Lista de gastos del tab con filtros de UI y orden aplicados (misma lógica que la tabla). */
+function filterExpensesList(expList) {
+    let filtered = expList;
+    if (expSearch) {
+        const q = expSearch.toLowerCase();
+        filtered = filtered.filter(e => (e.description || '').toLowerCase().includes(q) || (e.category || '').toLowerCase().includes(q) || (e.comment || '').toLowerCase().includes(q));
+    }
+    if (expFilterCard.length) filtered = filtered.filter(e => expFilterCard.includes('efectivo') ? (expFilterCard.includes(e.creditCard) || (!e.creditCard || e.creditCard === 'efectivo')) : expFilterCard.includes(e.creditCard));
+    if (expFilterCat) filtered = filtered.filter(e => e.category === expFilterCat);
+    if (expFilterPaid === 'paid') filtered = filtered.filter(e => e.paid);
+    if (expFilterPaid === 'unpaid') filtered = filtered.filter(e => !e.paid);
+    if (expFilterDateFrom) filtered = filtered.filter(e => (e.paymentDate || e.creationDate || '') >= expFilterDateFrom);
+    if (expFilterDateTo) filtered = filtered.filter(e => (e.paymentDate || e.creationDate || '') <= expFilterDateTo);
+    return applySortExp(filtered);
+}
+
 function toggleSelectExp(id) {
     if (selectedExpenses.has(id)) selectedExpenses.delete(id);
     else selectedExpenses.add(id);
@@ -2897,12 +2928,7 @@ function toggleSelectExp(id) {
 function toggleSelectAll() {
     const tab = activeTab();
     if (!tab) return;
-    const exps = getExpensesForTab(tab.id);
-    let filtered = exps;
-    if (expFilterCard.length) filtered = filtered.filter(e => expFilterCard.includes('efectivo') ? (expFilterCard.includes(e.creditCard) || (!e.creditCard || e.creditCard === 'efectivo')) : expFilterCard.includes(e.creditCard));
-    if (expFilterCat) filtered = filtered.filter(e => e.category === expFilterCat);
-    if (expFilterPaid === 'paid') filtered = filtered.filter(e => e.paid);
-    if (expFilterPaid === 'unpaid') filtered = filtered.filter(e => !e.paid);
+    const filtered = filterExpensesList(getExpensesForTab(tab.id));
     const allSelected = filtered.length > 0 && filtered.every(e => selectedExpenses.has(e.id));
     if (allSelected) { filtered.forEach(e => selectedExpenses.delete(e.id)); }
     else { filtered.forEach(e => selectedExpenses.add(e.id)); }
