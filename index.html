@@ -1674,7 +1674,7 @@ function render() {
                             <td style="text-align:center"><div class="paid-toggle ${sv.deductsFromSavings ? 'checked' : ''}" onclick="toggleSavDeduct('${sv.id}')" title="${sv.deductsFromSavings ? 'Descontando de Cta. Ahorros' : 'No descuenta de Cta. Ahorros'}">✓</div></td>
                             <td style="text-align:center"><span class="td-comment-icon ${sv.comment ? 'has-comment' : ''}" onclick="openCommentPopup('saving','${sv.id}')" title="${sv.comment ? esc(sv.comment) : 'Agregar comentario'}">💬</span></td>
                             <td><div class="td-actions">
-                                <button class="btn btn-icon btn-sm btn-ghost btn-danger" onclick="delSaving('${sv.id}')">✕</button>
+                                <button type="button" class="btn btn-icon btn-sm btn-ghost btn-danger" onclick='delSaving(${JSON.stringify(String(sv.id))})'>✕</button>
                             </div></td>
                         </tr>`;
                     }).join('')}
@@ -2240,10 +2240,24 @@ function saveSavingEntry(editId) {
 }
 
 function delSaving(id) {
-    if (!confirm('¿Eliminar este registro de ahorro?')) return;
-    state.savings = state.savings.filter(s => s.id !== id);
-    selectedSavings.delete(id);
-    save(); render();
+    const kid = String(id);
+    const sv = state.savings.find(s => String(s.id) === kid);
+    const label = sv ? esc(sv.description || 'Ahorro') : 'este registro';
+    openModal(`
+        <div class="modal-header"><h3>🗑️ Eliminar ahorro</h3><button type="button" class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body"><p style="font-size:0.88rem;line-height:1.55;color:var(--text-secondary)">¿Eliminar «${label}»?</p></div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>
+            <button type="button" class="btn btn-sm" style="background:var(--danger-text);color:#fff;border:none" onclick='confirmDelSaving(${JSON.stringify(kid)})'>Eliminar</button>
+        </div>
+    `);
+}
+
+function confirmDelSaving(kid) {
+    const k = String(kid);
+    state.savings = state.savings.filter(s => String(s.id) !== k);
+    selectedSavings.delete(k);
+    save(); closeModal(); render();
 }
 
 function toggleSavDeduct(id) {
@@ -2940,10 +2954,23 @@ function inlineEditCard(el, id) {
 
 function delExpense(id) {
     const kid = String(id);
-    if (!confirm('¿Eliminar este gasto?')) return;
-    state.expenses = state.expenses.filter(e => String(e.id) !== kid);
-    selectedExpenses.delete(kid);
-    save(); render();
+    const exp = state.expenses.find(e => String(e.id) === kid);
+    const label = exp ? esc(exp.description || 'Gasto') : 'este gasto';
+    openModal(`
+        <div class="modal-header"><h3>🗑️ Eliminar gasto</h3><button type="button" class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body"><p style="font-size:0.88rem;line-height:1.55;color:var(--text-secondary)">¿Eliminar «${label}»?</p></div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>
+            <button type="button" class="btn btn-sm" style="background:var(--danger-text);color:#fff;border:none" onclick='confirmDelExpense(${JSON.stringify(kid)})'>Eliminar</button>
+        </div>
+    `);
+}
+
+function confirmDelExpense(kid) {
+    const k = String(kid);
+    state.expenses = state.expenses.filter(e => String(e.id) !== k);
+    selectedExpenses.delete(k);
+    save(); closeModal(); render();
 }
 
 function deleteSelectedExpenses() {
