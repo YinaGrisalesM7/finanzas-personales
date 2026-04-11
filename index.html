@@ -748,7 +748,17 @@
             transition: all 0.15s ease;
         }
         .cat-picker-dd.open { opacity: 1; pointer-events: all; transform: translateY(0); }
-        .cat-picker-list { flex: 1; overflow-y: auto; padding: 6px; }
+        .cat-picker-search-wrap {
+            padding: 6px 8px 4px;
+            border-bottom: 1px solid var(--border-light);
+            flex-shrink: 0;
+        }
+        .cat-picker-search {
+            width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+            font-family: inherit; font-size: 0.78rem; outline: none; background: var(--surface-alt);
+        }
+        .cat-picker-search:focus { border-color: var(--text); background: white; }
+        .cat-picker-list { flex: 1; overflow-y: auto; padding: 6px; min-height: 48px; }
         .cat-picker-item {
             display: flex; align-items: center; justify-content: space-between; padding: 7px 10px;
             border-radius: 6px; cursor: pointer; transition: background var(--transition); gap: 8px;
@@ -764,6 +774,9 @@
             display: flex; gap: 2px; opacity: 0; transition: opacity var(--transition); flex-shrink: 0;
         }
         .cat-picker-item:hover .cat-actions { opacity: 1; }
+        @media (hover: none) {
+            .cat-picker-item .cat-actions { opacity: 1; }
+        }
         .cat-picker-item .cat-btn {
             width: 22px; height: 22px; border: none; background: none; cursor: pointer;
             color: var(--text-muted); font-size: 0.7rem; border-radius: 4px;
@@ -772,6 +785,20 @@
         }
         .cat-picker-item .cat-btn:hover { background: var(--surface-hover); }
         .cat-picker-item .cat-btn.del:hover { background: #FEF0EE; color: var(--danger-text); }
+        .cat-picker-item.cat-pending-del { background: #FEF6F4; flex-wrap: wrap; }
+        .cat-picker-item.cat-pending-del .cat-pending-msg {
+            width: 100%; font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px;
+        }
+        .cat-picker-item.cat-pending-del .cat-pending-btns {
+            width: 100%; display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end;
+        }
+        .cat-picker-item.cat-pending-del .cat-pending-btns button {
+            padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 600;
+            cursor: pointer; border: 1px solid var(--border); background: white; font-family: inherit;
+        }
+        .cat-picker-item.cat-pending-del .cat-pending-btns .btn-confirm-del {
+            background: var(--danger-text); color: white; border-color: var(--danger-text);
+        }
         .cat-picker-footer {
             border-top: 1px solid var(--border-light); padding: 8px;
             display: flex; gap: 6px;
@@ -2549,10 +2576,13 @@ function openExpenseModal(editId) {
                             <span class="arrow">▾</span>
                         </div>
                         <div class="cat-picker-dd" id="cat-picker-dd">
+                            <div class="cat-picker-search-wrap">
+                                <input id="cat-picker-search" class="cat-picker-search" type="search" autocomplete="off" placeholder="🔍 Buscar categoría..." onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" oninput="catDeletePending=null;renderCatList()">
+                            </div>
                             <div class="cat-picker-list" id="cat-picker-list"></div>
                             <div class="cat-picker-footer">
-                                <input id="f-newcat" type="text" placeholder="✨ Nueva categoría..." onkeydown="if(event.key==='Enter'){event.preventDefault();addCatFromPicker();}">
-                                <button onclick="addCatFromPicker()">+</button>
+                                <input id="f-newcat" type="text" placeholder="✨ Nueva categoría..." onclick="event.stopPropagation()" onkeydown="event.stopPropagation();if(event.key==='Enter'){event.preventDefault();addCatFromPicker();}">
+                                <button type="button" onclick="event.stopPropagation();addCatFromPicker()">+</button>
                             </div>
                         </div>
                     </div>
@@ -2597,20 +2627,36 @@ function autoFillPayDate() {
 
 /* ── Category Picker ── */
 let catPickerOpen = false;
+let catDeletePending = null;
 
 function toggleCatPicker() {
     catPickerOpen = !catPickerOpen;
-    document.getElementById('cat-picker-dd').classList.toggle('open', catPickerOpen);
-    document.querySelector('.cat-picker-trigger').classList.toggle('open', catPickerOpen);
+    const dd = document.getElementById('cat-picker-dd');
+    const trigger = document.querySelector('#cat-picker .cat-picker-trigger');
+    if (dd) dd.classList.toggle('open', catPickerOpen);
+    if (trigger) trigger.classList.toggle('open', catPickerOpen);
     if (catPickerOpen) {
-        setTimeout(() => document.getElementById('f-newcat')?.focus(), 50);
+        setTimeout(() => {
+            const s = document.getElementById('cat-picker-search');
+            if (s) {
+                s.value = '';
+                catDeletePending = null;
+                renderCatList();
+                s.focus();
+            } else {
+                document.getElementById('f-newcat')?.focus();
+            }
+        }, 50);
     }
 }
 
 function closeCatPicker() {
     catPickerOpen = false;
+    catDeletePending = null;
+    const search = document.getElementById('cat-picker-search');
+    if (search) search.value = '';
     const dd = document.getElementById('cat-picker-dd');
-    const trigger = document.querySelector('.cat-picker-trigger');
+    const trigger = document.querySelector('#cat-picker .cat-picker-trigger');
     if (dd) dd.classList.remove('open');
     if (trigger) trigger.classList.remove('open');
 }
@@ -2619,25 +2665,51 @@ function renderCatList() {
     const list = document.getElementById('cat-picker-list');
     if (!list) return;
     const current = document.getElementById('f-cat')?.value || '';
-    list.innerHTML = `
-        <div class="cat-picker-item ${!current ? 'selected' : ''}" onclick="selectCat('')">
-            <div class="cat-label"><span class="cat-dot" style="background:#E8E8E8"></span><span class="cat-name">🏷️ Sin categoría</span></div>
-        </div>
-        ${state.categories.map((c, i) => {
-            const col = CAT_COLORS[i % CAT_COLORS.length];
-            const safe = esc(c).replace(/'/g, "\\'");
-            return `<div class="cat-picker-item ${current === c ? 'selected' : ''}">
-                <div class="cat-label" onclick="selectCat('${safe}')">
-                    <span class="cat-dot" style="background:${col}"></span>
-                    <span class="cat-name">${esc(c)}</span>
-                </div>
-                <div class="cat-actions">
-                    <button class="cat-btn" onclick="event.stopPropagation();editCat('${safe}')" title="Editar">✏️</button>
-                    <button class="cat-btn del" onclick="event.stopPropagation();deleteCat('${safe}')" title="Eliminar">✕</button>
+    const q = (document.getElementById('cat-picker-search')?.value || '').trim().toLowerCase();
+    const catsFiltered = q
+        ? state.categories.filter(c => c.toLowerCase().includes(q))
+        : state.categories.slice();
+    if (catDeletePending && !catsFiltered.includes(catDeletePending)) catDeletePending = null;
+
+    let html = `
+        <div class="cat-picker-item ${!current ? 'selected' : ''}">
+            <div class="cat-label" onclick='selectCat("")'>
+                <span class="cat-dot" style="background:#E8E8E8"></span>
+                <span class="cat-name">🏷️ Sin categoría</span>
+            </div>
+        </div>`;
+
+    for (const c of catsFiltered) {
+        const idx = state.categories.indexOf(c);
+        const col = CAT_COLORS[(idx >= 0 ? idx : 0) % CAT_COLORS.length];
+        if (catDeletePending === c) {
+            html += `<div class="cat-picker-item cat-pending-del selected">
+                <div class="cat-label"><span class="cat-dot" style="background:${col}"></span><span class="cat-name">${esc(c)}</span></div>
+                <div class="cat-pending-msg">¿Eliminar esta categoría? Los gastos que la usaban quedarán sin categoría.</div>
+                <div class="cat-pending-btns">
+                    <button type="button" onclick="event.stopPropagation();cancelDeleteCat()">Cancelar</button>
+                    <button type="button" class="btn-confirm-del" onclick="event.stopPropagation();executeDeleteCat()">Eliminar</button>
                 </div>
             </div>`;
-        }).join('')}
-    `;
+            continue;
+        }
+        html += `<div class="cat-picker-item ${current === c ? 'selected' : ''}">
+            <div class="cat-label" onclick='selectCat(${JSON.stringify(c)})'>
+                <span class="cat-dot" style="background:${col}"></span>
+                <span class="cat-name">${esc(c)}</span>
+            </div>
+            <div class="cat-actions">
+                <button type="button" class="cat-btn" onclick='event.stopPropagation();editCat(${JSON.stringify(c)})' title="Editar">✏️</button>
+                <button type="button" class="cat-btn del" onclick='event.stopPropagation();requestDeleteCat(${JSON.stringify(c)})' title="Eliminar">✕</button>
+            </div>
+        </div>`;
+    }
+
+    if (q && catsFiltered.length === 0) {
+        html += `<div style="padding:12px;text-align:center;font-size:0.75rem;color:var(--text-muted);line-height:1.4">No hay coincidencias.<br>Usa el campo de abajo para crear «${esc(q)}».</div>`;
+    }
+
+    list.innerHTML = html;
 }
 
 function selectCat(val) {
@@ -2658,12 +2730,29 @@ function editCat(name) {
     save();
     const current = document.getElementById('f-cat')?.value;
     if (current === name) selectCat(trimmed);
+    catDeletePending = null;
     renderCatList();
 }
 
-function deleteCat(name) {
-    if (!confirm(`¿Eliminar la categoría "${name}"?`)) return;
+function requestDeleteCat(name) {
+    catDeletePending = name;
+    renderCatList();
+}
+
+function cancelDeleteCat() {
+    catDeletePending = null;
+    renderCatList();
+}
+
+function executeDeleteCat() {
+    const name = catDeletePending;
+    catDeletePending = null;
+    if (!name || !state.categories.includes(name)) {
+        renderCatList();
+        return;
+    }
     state.categories = state.categories.filter(c => c !== name);
+    state.expenses.forEach(e => { if (e.category === name) e.category = ''; });
     save();
     const current = document.getElementById('f-cat')?.value;
     if (current === name) selectCat('');
@@ -2674,6 +2763,7 @@ function addCatFromPicker() {
     const input = document.getElementById('f-newcat');
     const val = input.value.trim();
     if (!val || state.categories.includes(val)) { input.value = ''; return; }
+    catDeletePending = null;
     state.categories.push(val);
     save();
     selectCat(val);
