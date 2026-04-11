@@ -1302,6 +1302,28 @@ function parseFmtInput(s) {
     }
     return parseFloat(str) || 0;
 }
+
+/**
+ * Evalúa una expresión solo con números y + - * / ( ) . ,
+ * Si no hay operadores, usa parseFmtInput (formato local).
+ * No usa eval libre: solo caracteres permitidos y Function acotado.
+ */
+function evalMathExpressionSafe(s) {
+    let str = String(s || '').trim();
+    if (!str) return 0;
+    const looksLikeExpr = /[+\-*/()]/.test(str);
+    if (!looksLikeExpr) return parseFmtInput(str);
+    str = str.replace(/\s/g, '').replace(/,/g, '.');
+    if (!/^[\d+\-*/().]+$/.test(str) || str.length > 80) return NaN;
+    try {
+        const v = Function('"use strict"; return (' + str + ')')();
+        if (typeof v !== 'number' || !isFinite(v)) return NaN;
+        return v;
+    } catch {
+        return NaN;
+    }
+}
+
 function setupPriceInput(id) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -1313,6 +1335,23 @@ function setupPriceInput(id) {
     el.addEventListener('blur', function() {
         const raw = parseFmtInput(this.value);
         this.value = raw > 0 ? fmtInput(raw) : '';
+    });
+}
+
+/** Campo “Precio a Pagar”: permite expresiones (ej. 100000+50000/2) además del formato de moneda. */
+function setupPayPriceInput() {
+    const el = document.getElementById('f-payprice');
+    if (!el) return;
+    const initial = evalMathExpressionSafe(el.value);
+    if (el.value && !isNaN(initial) && initial > 0) el.value = fmtInput(initial);
+    el.addEventListener('focus', function() {
+        const raw = evalMathExpressionSafe(this.value);
+        this.value = raw > 0 && !isNaN(raw) ? String(raw) : '';
+    });
+    el.addEventListener('blur', function() {
+        const raw = evalMathExpressionSafe(this.value);
+        if (this.value.trim() && (isNaN(raw) || raw <= 0)) return;
+        this.value = raw > 0 && !isNaN(raw) ? fmtInput(raw) : '';
     });
 }
 
@@ -2563,7 +2602,7 @@ function openExpenseModal(editId) {
                     <input id="f-total" type="text" inputmode="decimal" value="${exp ? exp.totalPrice : ''}" placeholder="0">
                 </div>
                 <div class="form-group"><label>💸 Precio a Pagar</label>
-                    <input id="f-payprice" type="text" inputmode="decimal" value="${exp?.payPrice != null ? exp.payPrice : ''}" placeholder="0">
+                    <input id="f-payprice" type="text" inputmode="decimal" value="${exp?.payPrice != null ? exp.payPrice : ''}" placeholder="Ej: 50000 o 80000+12000/2" title="Puedes escribir una suma, resta, multiplicación o división. Al salir del campo se calcula el resultado.">
                 </div>
             </div>
             <input type="hidden" id="f-inst" value="${exp ? (exp.installments || 1) : 1}">
@@ -2614,7 +2653,7 @@ function openExpenseModal(editId) {
     if (!exp) { autoFillPayDate(); }
     renderCatList();
     setupPriceInput('f-total');
-    setupPriceInput('f-payprice');
+    setupPayPriceInput();
     document.getElementById('f-desc').focus();
 }
 
@@ -2789,7 +2828,12 @@ function saveExpense(editId) {
     const desc = document.getElementById('f-desc').value.trim();
     const total = parseFmtInput(document.getElementById('f-total').value);
     const installments = parseInt(document.getElementById('f-inst').value) || 1;
-    const payPrice = parseFmtInput(document.getElementById('f-payprice').value);
+    const payRaw = document.getElementById('f-payprice').value.trim();
+    const payPrice = evalMathExpressionSafe(document.getElementById('f-payprice').value);
+    if (payRaw && (isNaN(payPrice) || payPrice <= 0)) {
+        alert('Revisa el Precio a Pagar: usa un número válido o una expresión con +, -, *, / y paréntesis.');
+        return;
+    }
     const finalPay = payPrice > 0 ? payPrice : total;
     const finalTotal = total > 0 ? total : finalPay;
     const category = document.getElementById('f-cat').value;
