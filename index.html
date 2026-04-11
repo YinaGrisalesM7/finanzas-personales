@@ -1204,6 +1204,7 @@ function migrateState(p) {
         if (!sv.tabId) sv.tabId = p.tabs[0] && p.tabs[0].id;
     }
     for (const exp of p.expenses) {
+        if (exp.id != null && typeof exp.id !== 'string') exp.id = String(exp.id);
         if (!exp.tabId) {
             const pd = exp.paymentDate || exp.creationDate;
             if (pd) {
@@ -1331,7 +1332,7 @@ function render() {
     const tab = activeTab();
     if (!tab) return;
     const expenses = getExpensesForTab(tab.id);
-    const expSelToolbar = expenses.length ? filterExpensesList(expenses).filter(e => selectedExpenses.has(e.id)).length : 0;
+    const expSelToolbar = expenses.length ? filterExpensesList(expenses).filter(e => selectedExpenses.has(String(e.id))).length : 0;
     const ccExpenses = expenses.filter(e => e.creditCard && e.creditCard !== 'efectivo');
     const totalExp = expenses.reduce((s, e) => s + e.payAmount, 0);
     const totalCC = ccExpenses.reduce((s, e) => s + e.payAmount, 0);
@@ -1601,7 +1602,7 @@ function render() {
                 const hasFilters = expFilterCard.length || expFilterCat || expFilterPaid || expSearch || expFilterDateFrom || expFilterDateTo;
                 const filtered = filterExpensesList(expenses);
                 const filteredTotal = filtered.reduce((s, e) => s + e.payAmount, 0);
-                const selItems = filtered.filter(e => selectedExpenses.has(e.id));
+                const selItems = filtered.filter(e => selectedExpenses.has(String(e.id)));
                 const selCount = selItems.length;
                 const selTotal = selItems.reduce((s, e) => s + e.payAmount, 0);
                 const allSelected = filtered.length > 0 && selCount === filtered.length;
@@ -1659,20 +1660,20 @@ function render() {
                             `<option value="efectivo" ${(!e.creditCard || e.creditCard === 'efectivo') ? 'selected' : ''}>💵 Efectivo</option>`,
                             ...state.creditCards.map(c => `<option value="${c.id}" ${e.creditCard === c.id ? 'selected' : ''}>${esc(c.name)}</option>`)
                         ].join('');
-                        const isSel = selectedExpenses.has(e.id);
+                        const isSel = selectedExpenses.has(String(e.id));
                         return `<tr class="${isPaid ? 'row-paid' : ''} ${isSel ? 'row-selected' : ''}">
-                            <td style="text-align:center"><div class="sel-check ${isSel ? 'checked' : ''}" onclick="toggleSelectExp('${e.id}')">✓</div></td>
-                            <td><span class="td-editable" onclick="inlineEdit(this,'text','${e.id}','description')" style="font-weight:500">${esc(e.description)}</span></td>
-                            <td><span class="td-editable td-amount" onclick="inlineEdit(this,'money','${e.id}','totalPrice')">${fmt(e.totalPrice)}</span></td>
-                            <td><span class="td-editable td-amount" onclick="inlineEdit(this,'money','${e.id}','payPrice')" style="color:var(--danger-text)">${fmt(e.payAmount)}</span></td>
-                            <td><span class="td-editable" onclick="inlineEditCat(this,'${e.id}')"><span class="badge" style="background:${catCol}">${esc(e.category || '—')}</span></span></td>
-                            <td><span class="td-editable" onclick="inlineEditCard(this,'${e.id}')">${method}</span></td>
-                            <td><span class="td-editable" onclick="inlineEdit(this,'date','${e.id}','creationDate')" style="color:var(--text-muted);font-size:0.75rem">${fmtDate(e.creationDate)}</span></td>
-                            <td><span class="td-editable" onclick="inlineEdit(this,'date','${e.id}','paymentDate')" style="color:var(--text-muted);font-size:0.75rem">${fmtDate(e.paymentDate)}</span></td>
-                            <td style="text-align:center"><div class="paid-toggle ${isPaid ? 'checked' : ''}" onclick="togglePaid('${e.id}')" title="${isPaid ? 'Pagado' : 'Marcar como pagado'}">✓</div></td>
-                            <td style="text-align:center"><span class="td-comment-icon ${e.comment ? 'has-comment' : ''}" onclick="openCommentPopup('expense','${e.id}')" title="${e.comment ? esc(e.comment) : 'Agregar comentario'}">💬</span></td>
+                            <td style="text-align:center"><div class="sel-check ${isSel ? 'checked' : ''}" onclick='toggleSelectExp(${JSON.stringify(String(e.id))})'>✓</div></td>
+                            <td><span class="td-editable" onclick='inlineEdit(this,"text",${JSON.stringify(String(e.id))},"description")' style="font-weight:500">${esc(e.description)}</span></td>
+                            <td><span class="td-editable td-amount" onclick='inlineEdit(this,"money",${JSON.stringify(String(e.id))},"totalPrice")'>${fmt(e.totalPrice)}</span></td>
+                            <td><span class="td-editable td-amount" onclick='inlineEdit(this,"money",${JSON.stringify(String(e.id))},"payPrice")' style="color:var(--danger-text)">${fmt(e.payAmount)}</span></td>
+                            <td><span class="td-editable" onclick='inlineEditCat(this,${JSON.stringify(String(e.id))})'><span class="badge" style="background:${catCol}">${esc(e.category || '—')}</span></span></td>
+                            <td><span class="td-editable" onclick='inlineEditCard(this,${JSON.stringify(String(e.id))})'>${method}</span></td>
+                            <td><span class="td-editable" onclick='inlineEdit(this,"date",${JSON.stringify(String(e.id))},"creationDate")' style="color:var(--text-muted);font-size:0.75rem">${fmtDate(e.creationDate)}</span></td>
+                            <td><span class="td-editable" onclick='inlineEdit(this,"date",${JSON.stringify(String(e.id))},"paymentDate")' style="color:var(--text-muted);font-size:0.75rem">${fmtDate(e.paymentDate)}</span></td>
+                            <td style="text-align:center"><div class="paid-toggle ${isPaid ? 'checked' : ''}" onclick='togglePaid(${JSON.stringify(String(e.id))})' title="${isPaid ? 'Pagado' : 'Marcar como pagado'}">✓</div></td>
+                            <td style="text-align:center"><span class="td-comment-icon ${e.comment ? 'has-comment' : ''}" onclick='openCommentPopup("expense",${JSON.stringify(String(e.id))})' title="${e.comment ? esc(e.comment) : 'Agregar comentario'}">💬</span></td>
                             <td><div class="td-actions">
-                                <button class="btn btn-icon btn-sm btn-ghost btn-danger" onclick="delExpense('${e.id}')">✕</button>
+                                <button type="button" class="btn btn-icon btn-sm btn-ghost btn-danger" onclick='delExpense(${JSON.stringify(String(e.id))})'>✕</button>
                             </div></td>
                         </tr>`;
                     }).join('') : `<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.82rem">🔍 Sin resultados para este filtro</td></tr>`}
@@ -2469,7 +2470,7 @@ function deleteCard(id) {
 
 /* ══════════ EXPENSES ══════════ */
 function openExpenseModal(editId) {
-    const exp = editId ? state.expenses.find(e => e.id === editId) : null;
+    const exp = editId ? state.expenses.find(e => String(e.id) === String(editId)) : null;
     const title = exp ? '✏️ Editar Gasto' : '🧾 Nuevo Gasto';
     const cardOpts = state.creditCards.map(c =>
         `<option value="${c.id}" ${exp?.creditCard === c.id ? 'selected' : ''}>${esc(c.name)} (corte ${c.cutDay})</option>`
@@ -2662,7 +2663,7 @@ function saveExpense(editId) {
     const comment = document.getElementById('f-comment').value.trim();
     const data = { description: desc, totalPrice: finalTotal, payPrice: finalPay, installments, category, creditCard: card, creationDate: cdate, paymentDate: pdate, comment };
     if (editId) {
-        const idx = state.expenses.findIndex(e => e.id === editId);
+        const idx = state.expenses.findIndex(e => String(e.id) === String(editId));
         if (idx !== -1) state.expenses[idx] = { ...state.expenses[idx], ...data };
     } else {
         state.expenses.push({ id: uid(), tabId: activeTabId, ...data });
@@ -2671,13 +2672,15 @@ function saveExpense(editId) {
 }
 
 function togglePaid(id) {
-    const exp = state.expenses.find(e => e.id === id);
+    const kid = String(id);
+    const exp = state.expenses.find(e => String(e.id) === kid);
     if (exp) { exp.paid = !exp.paid; save(); render(); }
 }
 
 function inlineEdit(el, type, id, field) {
     if (el.querySelector('input')) return;
-    const exp = state.expenses.find(e => e.id === id);
+    const kid = String(id);
+    const exp = state.expenses.find(e => String(e.id) === kid);
     if (!exp) return;
     const oldVal = exp[field];
     let input;
@@ -2721,7 +2724,8 @@ function inlineEdit(el, type, id, field) {
 
 function inlineEditCat(el, id) {
     if (el.querySelector('select')) return;
-    const exp = state.expenses.find(e => e.id === id);
+    const kid = String(id);
+    const exp = state.expenses.find(e => String(e.id) === kid);
     if (!exp) return;
     const sel = document.createElement('select');
     sel.className = 'td-inline-select';
@@ -2737,7 +2741,8 @@ function inlineEditCat(el, id) {
 
 function inlineEditCard(el, id) {
     if (el.querySelector('select')) return;
-    const exp = state.expenses.find(e => e.id === id);
+    const kid = String(id);
+    const exp = state.expenses.find(e => String(e.id) === kid);
     if (!exp) return;
     const sel = document.createElement('select');
     sel.className = 'td-inline-select';
@@ -2752,15 +2757,16 @@ function inlineEditCard(el, id) {
 }
 
 function delExpense(id) {
+    const kid = String(id);
     if (!confirm('¿Eliminar este gasto?')) return;
-    state.expenses = state.expenses.filter(e => e.id !== id);
-    selectedExpenses.delete(id);
+    state.expenses = state.expenses.filter(e => String(e.id) !== kid);
+    selectedExpenses.delete(kid);
     save(); render();
 }
 
 function deleteSelectedExpenses() {
     if (selectedExpenses.size === 0) return;
-    const toRemove = state.expenses.filter(e => selectedExpenses.has(e.id));
+    const toRemove = state.expenses.filter(e => selectedExpenses.has(String(e.id)));
     if (toRemove.length === 0) {
         selectedExpenses.clear();
         render();
@@ -2770,16 +2776,35 @@ function deleteSelectedExpenses() {
     const msg = n === 1
         ? '¿Eliminar el gasto seleccionado?'
         : `¿Eliminar los ${n} gastos seleccionados?`;
-    if (!confirm(msg)) return;
-    state.expenses = state.expenses.filter(e => !selectedExpenses.has(e.id));
+    openModal(`
+        <div class="modal-header"><h3>🗑️ Confirmar</h3><button type="button" class="btn btn-icon btn-sm btn-ghost" onclick="closeModal()">✕</button></div>
+        <div class="modal-body"><p style="font-size:0.88rem;line-height:1.55;color:var(--text-secondary)">${esc(msg)}</p></div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>
+            <button type="button" class="btn btn-sm" style="background:var(--danger-text);color:#fff;border:none" onclick="confirmDeleteSelectedExpenses()">Eliminar</button>
+        </div>
+    `);
+}
+
+function confirmDeleteSelectedExpenses() {
+    const toRemove = state.expenses.filter(e => selectedExpenses.has(String(e.id)));
+    if (toRemove.length === 0) {
+        selectedExpenses.clear();
+        closeModal();
+        render();
+        return;
+    }
+    state.expenses = state.expenses.filter(e => !selectedExpenses.has(String(e.id)));
     selectedExpenses.clear();
-    save(); render();
+    save();
+    closeModal();
+    render();
 }
 
 function deleteSelectedExpensesFromToolbar() {
     const tab = activeTab();
     if (!tab) return;
-    const n = filterExpensesList(getExpensesForTab(tab.id)).filter(e => selectedExpenses.has(e.id)).length;
+    const n = filterExpensesList(getExpensesForTab(tab.id)).filter(e => selectedExpenses.has(String(e.id))).length;
     if (n === 0) {
         alert('Selecciona uno o más gastos con la casilla ✓ en la primera columna de la tabla. En pantallas pequeñas, desplaza la tabla hacia la derecha si no ves esa columna.');
         return;
@@ -2790,7 +2815,7 @@ function deleteSelectedExpensesFromToolbar() {
 function openCommentPopup(type, id) {
     let item, label;
     if (type === 'expense') {
-        item = state.expenses.find(e => e.id === id);
+        item = state.expenses.find(e => String(e.id) === String(id));
         label = item ? item.description : 'Gasto';
     } else {
         item = state.savings.find(s => s.id === id);
@@ -2822,7 +2847,7 @@ function openCommentPopup(type, id) {
 function saveCommentPopup(type, id) {
     const comment = document.getElementById('f-popup-comment').value.trim();
     if (type === 'expense') {
-        const item = state.expenses.find(e => e.id === id);
+        const item = state.expenses.find(e => String(e.id) === String(id));
         if (item) item.comment = comment;
     } else {
         const item = state.savings.find(s => s.id === id);
@@ -2920,8 +2945,9 @@ function filterExpensesList(expList) {
 }
 
 function toggleSelectExp(id) {
-    if (selectedExpenses.has(id)) selectedExpenses.delete(id);
-    else selectedExpenses.add(id);
+    const k = String(id);
+    if (selectedExpenses.has(k)) selectedExpenses.delete(k);
+    else selectedExpenses.add(k);
     render();
 }
 
@@ -2929,9 +2955,9 @@ function toggleSelectAll() {
     const tab = activeTab();
     if (!tab) return;
     const filtered = filterExpensesList(getExpensesForTab(tab.id));
-    const allSelected = filtered.length > 0 && filtered.every(e => selectedExpenses.has(e.id));
-    if (allSelected) { filtered.forEach(e => selectedExpenses.delete(e.id)); }
-    else { filtered.forEach(e => selectedExpenses.add(e.id)); }
+    const allSelected = filtered.length > 0 && filtered.every(e => selectedExpenses.has(String(e.id)));
+    if (allSelected) { filtered.forEach(e => selectedExpenses.delete(String(e.id))); }
+    else { filtered.forEach(e => selectedExpenses.add(String(e.id))); }
     render();
 }
 
@@ -2961,7 +2987,7 @@ function confirmDuplicateSelected() {
     const targetTabId = document.getElementById('f-dup-tab').value;
     if (!targetTabId) return;
     for (const expId of selectedExpenses) {
-        const exp = state.expenses.find(e => e.id === expId);
+        const exp = state.expenses.find(e => String(e.id) === String(expId));
         if (exp) {
             state.expenses.push({ ...exp, id: uid(), tabId: targetTabId, paid: false });
         }
