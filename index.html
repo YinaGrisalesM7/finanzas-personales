@@ -462,6 +462,8 @@
             font-weight: 600; cursor: pointer; transition: all var(--transition);
         }
         .sel-bar button:hover { background: rgba(255,255,255,0.25); }
+        .sel-bar button.sel-bar-danger { border-color: rgba(255,120,120,0.55); background: rgba(200,40,40,0.35); }
+        .sel-bar button.sel-bar-danger:hover { background: rgba(220,50,50,0.5); }
         tr.row-selected { background: rgba(44,44,44,0.04); }
 
         /* ── Sortable headers ── */
@@ -1603,6 +1605,7 @@ function render() {
             ${selCount > 0 ? `<div class="sel-bar">
                 <span>✅ ${selCount} seleccionado${selCount > 1 ? 's' : ''}</span>
                 <button onclick="duplicateSelectedToNewTab()">📋 Duplicar en otra pestaña</button>
+                <button type="button" class="sel-bar-danger" onclick="deleteSelectedExpenses()">🗑️ Eliminar</button>
                 <button onclick="selectedExpenses.clear();render()">✕ Deseleccionar</button>
             </div>` : ''}
             <div class="exp-filters">
@@ -2748,6 +2751,24 @@ function delExpense(id) {
     if (!confirm('¿Eliminar este gasto?')) return;
     state.expenses = state.expenses.filter(e => e.id !== id);
     selectedExpenses.delete(id);
+    save(); render();
+}
+
+function deleteSelectedExpenses() {
+    if (selectedExpenses.size === 0) return;
+    const toRemove = state.expenses.filter(e => selectedExpenses.has(e.id));
+    if (toRemove.length === 0) {
+        selectedExpenses.clear();
+        render();
+        return;
+    }
+    const n = toRemove.length;
+    const msg = n === 1
+        ? '¿Eliminar el gasto seleccionado?'
+        : `¿Eliminar los ${n} gastos seleccionados?`;
+    if (!confirm(msg)) return;
+    state.expenses = state.expenses.filter(e => !selectedExpenses.has(e.id));
+    selectedExpenses.clear();
     save(); render();
 }
 
