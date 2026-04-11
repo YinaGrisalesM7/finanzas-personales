@@ -1045,7 +1045,7 @@ async function connectGist() {
                 if (cloudData && cloudData.tabs && cloudData.tabs.length > 0) {
                     state = migrateState(cloudData);
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                    activeTabId = state.tabs[0]?.id || '';
+                    applyDefaultTabToCurrentMonth();
                 }
             }
         }
@@ -1084,7 +1084,7 @@ async function initApp() {
             if (cloudData && cloudData.tabs && cloudData.tabs.length > 0) {
                 state = migrateState(cloudData);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                activeTabId = state.tabs[0]?.id || '';
+                applyDefaultTabToCurrentMonth();
                 render();
             } else {
                 gistSave();
@@ -1142,6 +1142,7 @@ let state = loadState();
 let activeTabId = state.tabs[0]?.id || '';
 let menuTabId = null;
 let navYear = new Date().getFullYear();
+applyDefaultTabToCurrentMonth();
 let navSearch = '';
 let expFilterCard = [];
 let expFilterCat = '';
@@ -1293,6 +1294,48 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s || 
 function fmtDate(ds) { if (!ds) return ''; const [y,m,d] = ds.split('-'); return `${d}/${m}/${y}`; }
 
 function activeTab() { return state.tabs.find(t => t.id === activeTabId) || state.tabs[0]; }
+
+/** Activa la pestaña del mes calendario actual (o la más cercana) y alinea el año del navegador. */
+function applyDefaultTabToCurrentMonth() {
+    if (!state.tabs || !state.tabs.length) return;
+    const y = new Date().getFullYear();
+    const m = new Date().getMonth();
+    const idxNow = y * 12 + m;
+    const exact = state.tabs.find(t => t.year === y && t.month === m);
+    if (exact) {
+        activeTabId = exact.id;
+        navYear = y;
+        return;
+    }
+    const sameYear = state.tabs.filter(t => t.year === y);
+    if (sameYear.length) {
+        let best = sameYear[0];
+        let bestAbs = Math.abs(best.month - m);
+        for (let i = 1; i < sameYear.length; i++) {
+            const t = sameYear[i];
+            const d = Math.abs(t.month - m);
+            if (d < bestAbs || (d === bestAbs && t.month > best.month)) {
+                best = t;
+                bestAbs = d;
+            }
+        }
+        activeTabId = best.id;
+        navYear = y;
+        return;
+    }
+    let best = state.tabs[0];
+    let bestDist = Math.abs((best.year * 12 + best.month) - idxNow);
+    for (let i = 1; i < state.tabs.length; i++) {
+        const t = state.tabs[i];
+        const d = Math.abs((t.year * 12 + t.month) - idxNow);
+        if (d < bestDist) {
+            best = t;
+            bestDist = d;
+        }
+    }
+    activeTabId = best.id;
+    navYear = best.year;
+}
 
 function getPaymentMonth(dateStr, cutDay) {
     const d = new Date(dateStr + 'T12:00:00');
@@ -3088,7 +3131,7 @@ function importData(event) {
             const data = JSON.parse(e.target.result);
             if (data.expenses) {
                 state = migrateState(data);
-                activeTabId = state.tabs[0]?.id || '';
+                applyDefaultTabToCurrentMonth();
                 save(); render();
             }
         } catch (_) { alert('Error al importar.'); }
